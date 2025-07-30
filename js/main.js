@@ -1,0 +1,150 @@
+// Main application controller
+import { MapManager } from './map.js';
+import { DrawerManager } from './drawers.js';
+import { UIControlsManager } from './ui-controls.js';
+import { IsochroneManager } from './isochrones.js';
+import { loadPermitData } from './permits.js';
+import { loadDrivetimeStats } from './drivetimeStats.js';
+
+class NGHSFootprintApp {
+    constructor() {
+        this.mapManager = new MapManager();
+        this.drawerManager = new DrawerManager();
+        this.uiControlsManager = new UIControlsManager();
+        this.isochroneManager = new IsochroneManager();
+        this.isInitialized = false;
+    }
+
+    // Initialize the entire application
+    async initialize() {
+        try {
+            // console.log('Initializing NGHS Footprint App...');
+
+            // Wait for DOM to be fully loaded
+            if (document.readyState !== 'complete') {
+                await new Promise(resolve => {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', resolve);
+                    } else {
+                        resolve();
+                    }
+                });
+            }
+
+            // Initialize map
+            // console.log('Initializing map...');
+            this.mapManager.initializeMap();
+
+            // Initialize drawers
+            // console.log('Initializing drawers...');
+            const drawersInitialized = this.drawerManager.initialize();
+
+            if (!drawersInitialized) {
+                throw new Error('Failed to initialize drawers');
+            }
+
+            // Initialize UI controls
+            // console.log('Initializing UI controls...');
+            const uiControlsInitialized = this.uiControlsManager.initialize();
+
+            if (!uiControlsInitialized) {
+                throw new Error('Failed to initialize UI controls');
+            }
+
+            // Initialize drivetime stats module
+            loadDrivetimeStats();
+
+            // Connect managers for coordination
+            this.uiControlsManager.setMapManager(this.mapManager);
+            this.isochroneManager.setMapManager(this.mapManager);
+            this.uiControlsManager.setIsochroneManager(this.isochroneManager);
+
+            this.isInitialized = true;
+            // console.log('NGHS Footprint App initialized successfully!');
+
+            // Set up any additional application-level event listeners
+            this.setupGlobalEventListeners();
+
+            // Set up permit tracker integration
+            this.setupPermitTrackerIntegration();
+
+        } catch (error) {
+            console.error('Error initializing NGHS Footprint App:', error);
+        }
+    }
+
+    // Set up global event listeners
+    setupGlobalEventListeners() {
+        // Listen for window resize to handle map resizing if needed
+        window.addEventListener('resize', () => {
+            if (this.mapManager.getMap()) {
+                this.mapManager.getMap().resize();
+            }
+        });
+
+        // Add any other global event listeners here
+    }
+
+    // Set up permit tracker drawer integration
+    setupPermitTrackerIntegration() {
+        // Listen for opening of the permit tracker drawer
+        const permitBtn = document.querySelector('.permitTrackerBtn');
+        const permitDrawer = document.querySelector('.permit-tracker-drawer');
+        if (permitBtn && permitDrawer) {
+            permitBtn.addEventListener('click', () => {
+                permitDrawer.hidden = false;
+                loadPermitData();
+            });
+        }
+        // Listen for close button
+        const closeBtn = document.querySelector('.close-permit-button');
+        if (closeBtn && permitDrawer) {
+            closeBtn.addEventListener('click', () => {
+                permitDrawer.hidden = true;
+            });
+        }
+    }
+
+    // Get map instance (for use by other modules)
+    getMap() {
+        return this.mapManager.getMap();
+    }
+
+    // Get drawer manager (for use by other modules)
+    getDrawerManager() {
+        return this.drawerManager;
+    }
+
+    // Get UI controls manager (for use by other modules)
+    getUIControlsManager() {
+        return this.uiControlsManager;
+    }
+
+    // Get isochrone manager (for use by other modules)
+    getIsochroneManager() {
+        return this.isochroneManager;
+    }
+
+    // Check if app is fully initialized
+    isReady() {
+        return this.isInitialized;
+    }
+}
+
+// Create and initialize the app
+const app = new NGHSFootprintApp();
+
+// Initialize when page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        app.initialize();
+    });
+} else {
+    app.initialize();
+}
+
+// Export the app instance for use by other modules if needed
+export default app;
+
+// Expose app instance globally for debugging
+window.nghsApp = app; 

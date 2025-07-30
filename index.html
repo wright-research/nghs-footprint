@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>NGHS Footprint Map</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="Assets/pin-drop.png">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+    <!-- mapbox -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.10.0/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="style.css">
+    </style>
+
+    <!-- geocoder -->
+    <script
+        src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.3/mapbox-gl-geocoder.css"
+        type="text/css">
+
+    <!-- swipe to compare -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css"
+        type="text/css">
+
+    <!-- google font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <!-- Google Material Icons -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=map_search" />
+
+    <!-- shoelace for UI components -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/light.css" />
+    <script type="module"
+        src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace-autoloader.js"></script>
+
+    <!-- Libraries for CSV manipulation -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <!-- simple-statistics to calculate jenks natural breaks for choropleth -->
+    <script src="https://unpkg.com/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
+
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+    <!-- container for the geocoder search -->
+    <div id="geocoder-container"></div>
+
+    <!-- Map container that will hold both maps -->
+    <div id="comparison-container" style="position: relative; width: 100%; height: 100%;">
+        <div id="before-map" class="map"></div>
+        <div id="after-map" class="map"></div>
+        <div id="comparison-legend">
+            <h3 id="comparison-legend-title">Comparison Legend</h3>
+            <div id="comparison-legend-items"></div>
+        </div>
+    </div>
+
+    <!-- header -->
+    <header>
+        NGHS Footprint Map
+    </header>
+
+    <!-- shoelace drawer for filters -->
+    <sl-drawer label="" placement="start" class="drawer-placement" hidden>
+
+        <!-- dropdown for map layers -->
+        <div id="departmentDropdownContainer">
+            <sl-select id="departmentSelect" label="Filter by Department:" value="All">
+                <sl-option value="All">All</sl-option>
+                <sl-option value="GHI-Blairsville">GHI Blairsville</sl-option>
+                <sl-option value="GHI-Clayton">GHI Clayton</sl-option>
+                <sl-option value="GHI-Cumming">GHI Cumming</sl-option>
+                <sl-option value="GHI-Dahlonega">GHI Dahlonega</sl-option>
+                <sl-option value="GHI-Habersham">GHI Habersham</sl-option>
+                <sl-option value="GHI-Hamilton-Mill">GHI Hamilton Mill</sl-option>
+                <sl-option value="Medical-Plaza-Bethlehem">Medical Plaza in Bethlehem</sl-option>
+                <sl-option value="Medical-Plaza-1-Braselton">Medical Plaza 1 in Braselton</sl-option>
+                <sl-option value="Medical-Plaza-B-Braselton">Medical Plaza B in Braselton</sl-option>
+                <sl-option value="Medical-Plaza-Buford">Medical Plaza in Buford</sl-option>
+                <sl-option value="Medical-Plaza-1-Dawsonville">Medical Plaza 1 in Dawsonville</sl-option>
+                <sl-option value="Medical-Plaza-2-Dawsonville">Medical Plaza 2 in Dawsonville</sl-option>
+                <sl-option value="Medical-Plaza-1-Flowery-Branch">Medical Plaza 1 in Flowery Branch</sl-option>
+                <sl-option value="Medical-Park-1-Gainesville">Medical Park 1 in Gainesville</sl-option>
+                <sl-option value="Medical-Park-2-Gainesville">Medical Park 2 in Gainesville</sl-option>
+                <sl-option value="Medical-Plaza-Jefferson">Medical Plaza in Jefferson</sl-option>
+                <sl-option value="Medical-Plaza-1-Thompson-Bridge">Medical Plaza 1 - Thompson Bridge</sl-option>
+                <sl-option value="NGHS-Cleveland-MOB">NGHS Cleveland MOB</sl-option>
+                <sl-option value="NGMC-Barrow-MOB">NGMC Barrow MOB</sl-option>
+                <sl-option value="NGPG-Auburn-Primary-Care">NGPG Auburn Primary Care</sl-option>
+                <sl-option value="NGPG-Chestnut-Mountain">NGPG Chestnut Mountain</sl-option>
+                <sl-option value="NGPG-Clayton-Primary-Care">NGPG Clayton Primary Care</sl-option>
+                <sl-option value="NGPG-Community-Clinic">NGPG Community Clinic</sl-option>
+                <sl-option value="Concierge-Medicine">Concierge Medicine</sl-option>
+                <sl-option value="NGPG-Cumming">NGPG Cumming</sl-option>
+                <sl-option value="NGPG-Dacula-Primary-Care">NGPG Dacula Primary Care</sl-option>
+                <sl-option value="NGPG-Dahlonega">NGPG Dahlonega</sl-option>
+                <sl-option value="Dawsonville-Surgical-Associates">Dawsonville Surgical Associates</sl-option>
+                <sl-option value="NGPG-Family-Medicine-Lavonia">NGPG Family Medicine in Lavonia</sl-option>
+                <sl-option value="NGPG-Hamilton-Mill">NGPG Hamilton Mill</sl-option>
+                <sl-option value="NGPG-Internal-Medicine-Demorest">NGPG Internal Medicine in Demorest</sl-option>
+                <sl-option value="NGPG-Oakwood">NGPG Oakwood</sl-option>
+                <sl-option value="NGPG-Orthopedic-Surgery-Sports-Medicine">NGPG Ortho. Surgery & Sports Med. in
+                    Demorest</sl-option>
+                <sl-option value="NGPG-Orthopedic-Surgery-Dahlonega">NGPG Ortho. Surgery in Dahlonega</sl-option>
+                <sl-option value="NGPG-Orthopedic-Surgery-Hamilton-Mill">NGPG Ortho. Surgery in Hamilton
+                    Mill</sl-option>
+                <sl-option value="NGPG-Orthopedic-Surgery-Toccoa">NGPG Ortho. Surgery in Toccoa</sl-option>
+                <sl-option value="NGPG-Orthopedic-Trauma-Recon-Surgery">NGPG Ortho. Trauma & Recon. Surgery</sl-option>
+                <sl-option value="NGPG-Surgical-Associates-Demorest">NGPG Surgical Associates in Demorest</sl-option>
+                <sl-option value="NGPG-Surgical-Associates-Toccoa">NGPG Surgical Associates in Toccoa</sl-option>
+                <sl-option value="NGPG-West-Jackson">NGPG West Jackson</sl-option>
+                <sl-option value="Toccoa-Clinic">Toccoa Clinic</sl-option>
+                <sl-option value="Urgent-Care-Jefferson">Urgent Care in Jefferson</sl-option>
+                <sl-option value="Wisteria-Medical-Office-Building">Wisteria Medical Office Building</sl-option>
+            </sl-select>
+        </div>
+
+        <!-- vertical spacing -->
+        <br />
+
+        <!-- toggle for demographic compare -->
+        <div style="text-align: center; margin-top: 10px;">
+            <sl-tooltip content="Toggle on a sideview map of demographics">
+                <sl-switch id="compareDemographics">Show Comparison Map</sl-switch>
+            </sl-tooltip>
+        </div>
+
+        <!-- Dropdown that is greyed out by default -->
+        <div id="comparisonDropdownContainer" style="display: block; margin-top: 30px;">
+            <sl-select id="comparisonSelect" label="Comparison layer:" placeholder="Select layer"
+                value="current_population" disabled>
+                <sl-option value="aerial">Blank - Aerial</sl-option>
+                <sl-option value="streets">Blank - Streets</sl-option>
+                <sl-option value="current-population">Current Population</sl-option>
+                <sl-option value="projected-population-change">Projected Population Change</sl-option>
+                <sl-option value="home-sales">Home Sales</sl-option>
+                <sl-option value="median-home-price">Median Home Sale Price</sl-option>
+                <sl-option value="median-income">Median Income</sl-option>
+                <sl-option value="dot-under-construction">DOT Projects - Under Construction</sl-option>
+                <sl-option value="dot-pre-construction">DOT Projects - Pre Construction</sl-option>
+            </sl-select>
+        </div>
+
+        <!-- vertical spacing -->
+        <br />
+
+        <!-- drivetime polygon checkboxes -->
+        <div class="drivetime-container">
+            <h3 class="drivetime-header">Drivetime From NGPG - Jefferson (Minutes)</h3>
+
+            <div class="drivetime-checkboxes">
+                <sl-checkbox id="drivetime-10" value="10">10</sl-checkbox>
+                <sl-checkbox id="drivetime-20" value="20">20</sl-checkbox>
+                <sl-checkbox id="drivetime-30" value="30">30</sl-checkbox>
+            </div>
+        </div>
+
+        <!-- vertical spacing -->
+        <br />
+
+        <!-- Additional layers checkboxes -->
+        <div class="additional-layers-container">
+            <div class="additional-layers-checkboxes">
+                <sl-checkbox id="possible-sites">Possible Sites</sl-checkbox>
+            </div>
+        </div>
+
+        <!-- vertical spacing -->
+        <br />
+
+        <!-- Drivetime Statistics -->
+        <div id="summary-stats-container" class="stats-table-container">
+            <h3 style="margin-bottom: 8px;">Visits by Drivetime</h3>
+            <table id="summary-stats-table">
+                <tbody id="summary-stats-body">
+                    <tr>
+                        <td colspan="3">Select a department to view statistics</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- vertical spacing -->
+        <br />
+
+
+        <!-- close button -->
+        <sl-button slot="footer" class="close-button" variant="primary">
+            Close
+        </sl-button>
+    </sl-drawer>
+
+    <!-- open map filter -->
+    <sl-tooltip id="drawerTooltip" content="Open side panel for options and stats." hoist trigger="manual">
+        <sl-button class="openDrawerBtn openDrawer" variant="plain">
+            <div style="font-size: 15px;">Map Filters</div>
+        </sl-button>
+    </sl-tooltip>
+
+    <!-- Permit Tracker button and drawer -->
+    <sl-tooltip id="permitTrackerTooltip" content="Open panel to see building permits." hoist trigger="manual">
+        <sl-button class="openDrawerBtn permitTrackerBtn" variant="plain">
+            <div style="font-size: 15px;">Building Permits</div>
+        </sl-button>
+    </sl-tooltip>
+
+    <sl-drawer label="" placement="bottom" class="permit-tracker-drawer" hidden>
+        <h3 style="text-align: center; margin-bottom: 10px; margin-top: 5px;">Building Permits Over Time</h3>
+        <div class="permit-controls-row">
+            <!-- multiple select for the jurisdictions shown in the chart -->
+            <div id="jurisdictionSelectContainer">
+                <sl-select id="jurisdictionSelect" label="Select Jurisdiction(s):" multiple max-options-visible=7
+                    value="Gainesville">
+                    <small><i>Cities</i></small>
+                    <sl-option value="Arcade">Arcade</sl-option>
+                    <sl-option value="Athens-Clarke-County">Athens-Clarke County</sl-option>
+                    <sl-option value="Auburn">Auburn</sl-option>
+                    <sl-option value="Braselton">Braselton</sl-option>
+                    <sl-option value="Buford">Buford</sl-option>
+                    <sl-option value="Commerce">Commerce</sl-option>
+                    <sl-option value="Dawsonville">Dawsonville</sl-option>
+                    <sl-option value="Flowery-Branch">Flowery Branch</sl-option>
+                    <sl-option value="Gainesville">Gainesville</sl-option>
+                    <sl-option value="Jefferson">Jefferson</sl-option>
+                    <sl-option value="Lula">Lula</sl-option>
+                    <sl-option value="Oakwood">Oakwood</sl-option>
+                    <sl-option value="Pendergrass">Pendergrass</sl-option>
+                    <sl-option value="Sugar-Hill">Sugar Hill</sl-option>
+                    <sl-option value="Watkinsville">Watkinsville</sl-option>
+                    <sl-option value="Winder">Winder</sl-option>
+                    <sl-divider></sl-divider>
+                    <small><i>Unincorporated County Areas</i></small>
+                    <sl-option value="Banks-County-U.A.">Banks</sl-option>
+                    <sl-option value="Barrow-County-U.A.">Barrow</sl-option>
+                    <sl-option value="Dawson-County-U.A.">Dawson</sl-option>
+                    <sl-option value="Franklin-County-U.A.">Franklin</sl-option>
+                    <sl-option value="Habersham-County-U.A.">Habersham</sl-option>
+                    <sl-option value="Hall-County-U.A.">Hall</sl-option>
+                    <sl-option value="Jackson-County-U.A.">Jackson</sl-option>
+                    <sl-option value="Lumpkin-County-U.A.">Lumpkin</sl-option>
+                    <sl-option value="Stephens-County-U.A.">Stephens</sl-option>
+                    <sl-option value="White-County-U.A.">White</sl-option>
+                </sl-select>
+            </div>
+
+            <!-- sl-radio group for the permit types -->
+            <div class="permitRadioGroup">
+                <sl-radio-group id="permitTypeSelect" label="Select permit type:" value="all">
+                    <sl-radio-button value="all">All</sl-radio-button>
+                    <sl-radio-button value="single-family">Single-Family</sl-radio-button>
+                    <sl-radio-button value="multi-family">Multi-Family</sl-radio-button>
+                </sl-radio-group>
+            </div>
+        </div>
+
+        <!-- Chart container -->
+        <div class="chart-container">
+            <canvas id="permitChart"></canvas>
+        </div>
+
+        <!-- close button -->
+        <sl-button slot="footer" class="close-permit-button" variant="primary">
+            Close
+        </sl-button>
+    </sl-drawer>
+
+    <!-- Legend Container for main map -->
+    <div id="legend" class="legend" style="color: #fff;">
+        <div id="legend-title" style="margin-bottom: 10px; font-weight: bold; ">
+            <h3>Placeholder</h3>
+        </div>
+        <div id="legend-items"></div>
+    </div>
+
+    <!-- Comparison map legend (initially hidden) -->
+    <div id="comparison-legend" class="legend"
+        style="position: absolute; bottom: 30px; left: 10px; background: white; padding: 10px; border-radius: 5px; z-index: 1; display: none;">
+    </div>
+
+    <!-- logo -->
+    <a href="https://www.nghs.org/" target="_blank">
+        <img src="Assets/nghs_logo.png" alt="Logo" class="nghs-logo">
+    </a>
+
+    <!-- Data currency information -->
+    <div class="data-currency">Patient visits shown for May 2024 to June 2025.</div>
+
+    <!-- tooltip for visits -->
+    <div id="tooltip"
+        style="position: absolute; background: rgba(0,0,0,0.6); color: white; padding: 5px; border-radius: 3px; display: none;">
+        <strong>Visits:</strong> <span id="tooltip-visits"></span><br>
+    </div>
+
+    <!-- Reference the main application JavaScript module -->
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>

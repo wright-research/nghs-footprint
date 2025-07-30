@@ -1,0 +1,534 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    overflow: hidden;
+}
+
+/* Regular (i.e. light mode) header */
+header {
+    background-color: #343a40;
+    color: #fff;
+    text-align: left;
+    padding: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    opacity: 0.95;
+    border-bottom: 1px solid #efefef;
+}
+
+/* Dark mode header */
+header.dark-mode {
+    background-color: #efefef;
+    color: #343a40;
+    border-bottom: 1px solid #666;
+}
+
+.nghs-logo {
+    position: absolute;
+    right: 30px;
+    bottom: 45px;
+    transform: translateY(-50%);
+    /* Ensures perfect vertical centering */
+    height: 45px;
+    /* Adjust as needed */
+    width: auto;
+    /* Maintains aspect ratio */
+    z-index: 2;
+}
+
+/* Common positioning for the button - applies in both modes */
+sl-button.openDrawerBtn {
+    position: absolute;
+    bottom: 85px;
+    left: 15px;
+    z-index: 99;
+    opacity: var(--opacity-value);
+}
+
+/* Position the Permit Tracker button */
+sl-button.permitTrackerBtn {
+    bottom: 30px;
+}
+
+/* Light mode styling (default) */
+sl-button.openDrawerBtn::part(base) {
+    background-color: #343a40;
+    /* Dark background in light mode */
+    color: white;
+    border-radius: 10px;
+    border: 1px solid #efefef;
+    width: 148px;
+    transition: var(--sl-transition-medium) background-color ease,
+        var(--sl-transition-medium) border ease,
+        var(--sl-transition-medium) color ease;
+}
+
+/* Light mode hover effect */
+sl-button.openDrawerBtn::part(base):hover {
+    background-color: #efefef;
+    /* Light background on hover in light mode */
+    color: #343a40;
+    border: 1px solid #343a40;
+}
+
+/* Dark mode styling */
+sl-button.openDrawerBtn.dark-mode::part(base) {
+    background-color: #efefef;
+    /* Light background in dark mode */
+    color: #343a40;
+    border: 1px solid #343a40;
+}
+
+/* Dark mode hover effect */
+sl-button.openDrawerBtn.dark-mode::part(base):hover {
+    background-color: #343a40;
+    /* Dark background on hover in dark mode */
+    color: white;
+    border: 1px solid #efefef;
+}
+
+#geocoder-container {
+    position: absolute;
+    top: 0.5px;
+    right: 0px !important;
+    z-index: 99 !important;
+}
+
+#geocoder-container:hover {
+    opacity: 1 !important;
+}
+
+#geocoder-container .mapboxgl-ctrl-geocoder input {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* place the geocoder at the top left of the screen */
+.mapboxgl-ctrl-geocoder {
+    width: 80px !important;
+    transition: width 0.3s ease !important;
+    margin-top: 6px !important;
+    margin-right: 20px !important;
+    opacity: var(--opacity-value);
+    z-index: 10 !important;
+    border: 2px solid #343a40;
+}
+
+/* Expanded state on focus */
+.mapboxgl-ctrl-geocoder:focus-within {
+    width: 300px !important;
+}
+
+.mapboxgl-popup-content {
+    font-family: "Segoe UI", sans-serif;
+    border-radius: 12px;
+    border: 2px solid #343a40;
+    background-color: #d3d3d3;
+    opacity: 0.9;
+    padding: 10px;
+}
+
+.mapboxgl-popup.custom-popup h3 {
+    font-size: 16px;
+    color: #343a40;
+}
+
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+    display: none;
+}
+
+.mapboxgl-popup-close-button:focus {
+    outline: none;
+}
+
+/* Map comparison styles */
+.map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Hide the comparison map by default and allow interaction with main map */
+#after-map {
+    display: none;
+    pointer-events: none;
+}
+
+/* Show comparison map when comparison mode is active */
+#comparison-container.comparison-active #after-map {
+    display: block;
+    pointer-events: auto;
+}
+
+/* Prevent text selection during map interaction */
+#comparison-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+}
+
+/* Prevent text selection during map interaction */
+#comparison-container * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Style the comparison slider */
+.compare-swiper-vertical {
+    background-color: #343a40 !important;
+    opacity: var(--opacity-value) !important;
+}
+
+/* set global styling variables */
+:root {
+    --opacity-value: 0.90;
+    --topline-margin: 25px;
+}
+
+#feature-filter+span {
+    position: absolute;
+    right: 20px;
+    color: darkgrey;
+    top: 15px;
+}
+
+/* Google Material UI icons */
+.material-symbols-outlined {
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
+    vertical-align: middle;
+    /* Align icon with text */
+    margin-left: 4px;
+    /* Optional: Add space between text and icon */
+    line-height: 1;
+    /* Ensures consistent alignment */
+}
+
+/* Center the radio group */
+#theme-toggle-container {
+    text-align: center;
+    position: absolute;
+    /* center align the radio group */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99;
+    opacity: var(--opacity-value);
+    /* Ensure --opacity-value is defined */
+}
+
+#theme-radio-container sl-radio-group {
+    text-align: center;
+    width: 100%;
+}
+
+/* Add space after the label inside the radio group */
+#theme-radio-container sl-radio-group::part(form-control-label) {
+    margin-bottom: 10px;
+}
+
+#tooltip {
+    position: absolute;
+    background: white;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 14px;
+    color: #111;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    max-width: 200px;
+    pointer-events: none;
+    z-index: 10;
+    display: none;
+}
+
+.drivetime-container {
+    margin-top: 20px;
+    align-items: center;
+    text-align: center;
+}
+
+.drivetime-header {
+    font-size: 17px;
+    font-weight: 400;
+    text-align: center;
+    margin: 0 0 15px 0;
+}
+
+.drivetime-checkboxes {
+    display: flex;
+    justify-content: center;
+    gap: 9px;
+}
+
+.additional-layers-container {
+    margin-top: 20px;
+    align-items: center;
+    text-align: center;
+}
+
+.additional-layers-checkboxes {
+    display: flex;
+    justify-content: center;
+    gap: 9px;
+}
+
+.dot-header {
+    font-size: 17px;
+    font-weight: 400;
+    text-align: center;
+    margin: 0 0 15px 0;
+}
+
+.dot-checkboxes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+}
+
+/* set up the legend */
+.legend {
+    background-color: #343a40;
+    opacity: var(--opacity-value);
+    border-radius: 10px;
+    border: 1px solid #efefef;
+    bottom: 143px;
+    /* Adjusted position to account for new button */
+    font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    padding: 10px;
+    position: absolute;
+    left: 15px;
+    z-index: 1;
+    text-align: center;
+    width: 125px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.legend h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.legend-key {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
+.legend-item {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+#comparison-legend {
+    display: none;
+    background-color: #343a40;
+    opacity: var(--opacity-value);
+    border-radius: 10px;
+    border: 1px solid #343a40;
+    font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    padding: 10px;
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    /* dynamically anchor to the right edge */
+    z-index: 2;
+    text-align: center;
+    width: auto;
+    color: #fff;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#comparison-legend .legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+#comparison-legend .legend-key {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    display: inline-block;
+}
+
+#comparison-legend.dark-mode {
+    background-color: #efefef;
+    color: #343a40;
+    border: 1px solid #efefef;
+}
+
+#comparison-legend-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* style for drivetime stats table */
+.stats-table-container {
+    background-color: none;
+    border-radius: 6px;
+    border: 1px solid #e4e4e6;
+    font: 15px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    padding: 10px;
+    z-index: 1;
+    width: auto;
+    height: auto;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    color: #343a40;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.stats-table-container h3 {
+    margin: 0 0 50px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.stats-table-container.dark-mode {
+    background-color: #efefef;
+    color: #343a40;
+    box-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+#summary-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#summary-stats-table th,
+#summary-stats-table td {
+    padding: 5px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+#summary-stats-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+#summary-stats-table tr:last-child td {
+    border-bottom: none;
+}
+
+@media screen and (max-width: 768px) {
+
+    /* reposition Filter button to be centered left-to-right */
+    sl-button.openDrawer {
+        bottom: 25px;
+        width: 90px;
+    }
+
+    /* remove the following elements on mobile */
+    .header-logo,
+    .mapboxgl-ctrl-geocoder,
+    .nghs-logo,
+    .svn-logo,
+    #downloadBtn {
+        display: none !important;
+        /* Hides elements on smaller screens */
+    }
+}
+
+/* Disable scrollbar in sl-drawer */
+sl-drawer::part(body) {
+    overflow-y: hidden;
+}
+
+/* Data currency text styling */
+.data-currency {
+    /* center the text */
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 17px;
+    font-style: italic;
+    position: absolute;
+    color: #343a40;
+    z-index: 1;
+    font-weight: 600;
+    /* White stroke with proper paint order */
+    -webkit-text-stroke: 4px white;
+    paint-order: stroke fill;
+}
+
+/* Permit tracker drawer styling */
+.permit-tracker-drawer::part(body) {
+    padding-top: 0;
+    overflow-y: hidden;
+}
+
+.permit-tracker-drawer::part(panel) {
+    height: 75vh;
+}
+
+.chart-container {
+    margin-left: 30px;
+    margin-right: 0px;
+    padding-left: 50px;
+    padding-right: 50px;
+    height: 75%;
+    width: 90%;
+    /* center align the chart */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Permit tracker controls row: dropdown + radio group side by side --- */
+.permit-controls-row {
+    display: flex;
+    flex-direction: row;
+    gap: 80px;
+    align-items: flex-end;
+    margin-bottom: 18px;
+    margin-left: 120px;
+    margin-right: 120px;
+}
+
+#jurisdictionSelectContainer {
+    flex: 1;
+    min-width: 220px;
+}
+
+.permitRadioGroup {
+    min-width: 220px;
+}
+
+@media (max-width: 600px) {
+    .permit-controls-row {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    #jurisdictionSelectContainer,
+    .permitRadioGroup {
+        min-width: 0;
+    }
+}
