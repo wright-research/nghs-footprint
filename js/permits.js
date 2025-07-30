@@ -78,11 +78,13 @@ function getPermitColumn() {
 
 // Convert dropdown value to human-readable label for unincorporated areas
 function prettifyAreaName(value) {
+    // Unincorporated area pattern
     const match = value.match(/^(.+)-County-U\.A\.$/);
     if (match) {
         return `Unincorporated ${match[1]} County`;
     }
-    return value;
+    // Otherwise, replace hyphens with spaces for all other names
+    return value.replace(/-/g, ' ');
 }
 
 // Prepare Chart.js datasets for selected jurisdictions and permit type
