@@ -5,6 +5,7 @@ import { UIControlsManager } from './ui-controls.js';
 import { IsochroneManager } from './isochrones.js';
 import { loadPermitData } from './permits.js';
 import { loadDrivetimeStats } from './drivetimeStats.js';
+import { ComparisonMapManager } from './comparisonMap.js';
 
 class NGHSFootprintApp {
     constructor() {
@@ -12,6 +13,7 @@ class NGHSFootprintApp {
         this.drawerManager = new DrawerManager();
         this.uiControlsManager = new UIControlsManager();
         this.isochroneManager = new IsochroneManager();
+        this.comparisonMapManager = new ComparisonMapManager();
         this.isInitialized = false;
     }
 
@@ -54,10 +56,14 @@ class NGHSFootprintApp {
             // Initialize drivetime stats module
             loadDrivetimeStats();
 
+            // Initialize comparison map manager
+            this.comparisonMapManager.initialize();
+
             // Connect managers for coordination
             this.uiControlsManager.setMapManager(this.mapManager);
             this.isochroneManager.setMapManager(this.mapManager);
             this.uiControlsManager.setIsochroneManager(this.isochroneManager);
+            this.comparisonMapManager.setMapManager(this.mapManager);
 
             this.isInitialized = true;
             // console.log('NGHS Footprint App initialized successfully!');
@@ -79,6 +85,11 @@ class NGHSFootprintApp {
         window.addEventListener('resize', () => {
             if (this.mapManager.getMap()) {
                 this.mapManager.getMap().resize();
+            }
+            
+            // Also resize the comparison map if it's active
+            if (this.comparisonMapManager.isActive() && this.comparisonMapManager.getAfterMap()) {
+                this.comparisonMapManager.getAfterMap().resize();
             }
         });
 
