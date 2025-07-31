@@ -64,6 +64,11 @@ export class ComparisonMapManager {
     this.mapManager = mapManager;
   }
 
+  // Set reference to IsochroneManager for coordination
+  setIsochroneManager(isochroneManager) {
+    this.isochroneManager = isochroneManager;
+  }
+
   // Enable comparison mode - create second map and activate split view
   async enableComparisonMode() {
     if (this.isComparisonActive || !this.mapManager) return;
@@ -93,6 +98,9 @@ export class ComparisonMapManager {
       setTimeout(() => {
         this.initializeCompare();
       }, 150);
+
+      // Sync any existing isochrones from the main map
+      this.syncExistingIsochrones();
 
       this.isComparisonActive = true;
       console.log('Comparison mode enabled');
@@ -186,6 +194,9 @@ export class ComparisonMapManager {
         this.afterMap.on('load', () => {
           console.log('After-map loaded successfully');
           
+          // Load county layers for the after-map
+          this.loadCountyLayersAfterMap();
+          
           // If the comparison container is already active, resize immediately
           const comparisonContainer = document.getElementById('comparison-container');
           if (comparisonContainer && comparisonContainer.classList.contains('comparison-active')) {
@@ -250,5 +261,245 @@ export class ComparisonMapManager {
   // Check if comparison mode is currently active
   isActive() {
     return this.isComparisonActive;
+  }
+
+  // Load county layers for the after-map (reusing logic from MapManager)
+  async loadCountyLayersAfterMap() {
+    if (!this.afterMap) return;
+
+    try {
+      console.log('Loading county layers for comparison map...');
+
+      // Load county boundaries and labels in parallel
+      await Promise.all([
+        this.loadCountyBoundariesAfterMap(),
+        this.loadCountyLabelsAfterMap()
+      ]);
+
+      console.log('County layers loaded successfully for comparison map');
+    } catch (error) {
+      console.error('Error loading county layers for comparison map:', error);
+    }
+  }
+
+  // Load county boundary polygons for after-map
+  async loadCountyBoundariesAfterMap() {
+    if (!this.afterMap) return;
+
+    try {
+      const response = await fetch('Data/Other/counties.geojson');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const countiesData = await response.json();
+
+      // Add county boundaries as a source
+      this.afterMap.addSource('counties', {
+        type: 'geojson',
+        data: countiesData
+      });
+
+      // Add county boundary layer (outline only)
+      this.afterMap.addLayer({
+        id: 'county-boundaries',
+        type: 'line',
+        source: 'counties',
+        paint: {
+          'line-color': '#666666',
+          'line-width': 1,
+          'line-opacity': 0.8
+        }
+      });
+
+      console.log('County boundaries loaded for comparison map');
+    } catch (error) {
+      console.error('Error loading county boundaries for comparison map:', error);
+    }
+  }
+
+  // Load county label points for after-map
+  async loadCountyLabelsAfterMap() {
+    if (!this.afterMap) return;
+
+    try {
+      const response = await fetch('Data/Other/county_labels.geojson');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const labelsData = await response.json();
+
+      // Add county labels as a source
+      this.afterMap.addSource('county-labels', {
+        type: 'geojson',
+        data: labelsData
+      });
+
+      // Add county label layer
+      this.afterMap.addLayer({
+        id: 'county-label-text',
+        type: 'symbol',
+        source: 'county-labels',
+        layout: {
+          'text-field': ['get', 'county'],
+          'text-font': ['Open Sans Bold Italic', 'Arial Unicode MS Bold'],
+          'text-size': 16,
+          'text-anchor': 'center',
+          'text-allow-overlap': false,
+          'text-ignore-placement': false,
+          'text-optional': true,
+          'text-transform': 'uppercase',
+        },
+        paint: {
+          'text-color': '#444444',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1
+        }
+      });
+
+      console.log('County labels loaded for comparison map');
+    } catch (error) {
+      console.error('Error loading county labels for comparison map:', error);
+    }
+  }
+
+  // Ensure county layers stay on top of other layers in after-map
+  ensureCountyLayersOnTopAfterMap() {
+    if (!this.afterMap) return;
+
+    // Move county boundaries to top if they exist
+    if (this.afterMap.getLayer('county-boundaries')) {
+      this.afterMap.moveLayer('county-boundaries');
+    }
+
+    // Move county labels to top (above boundaries) if they exist
+    if (this.afterMap.getLayer('county-label-text')) {
+      this.afterMap.moveLayer('county-label-text');
+    }
+  }
+
+  // Load isochrone data for after-map (sync with main map)
+  async loadIsochroneAfterMap(departmentValue, isochroneData) {
+    if (!this.afterMap || !isochroneData) return;
+
+    try {
+      // Clear existing isochrones first
+      this.clearIsochronesAfterMap();
+
+      // Skip if "All" is selected
+      if (departmentValue === 'All') {
+        return;
+      }
+
+      // Add source for isochrone data
+      this.afterMap.addSource('isochrone-source', {
+        type: 'geojson',
+        data: isochroneData
+      });
+
+      // Define border colors for each time interval (matching main map)
+      const timeBorders = {
+        '10-min': '#0064c8', // Dark blue for 10-minute (closest)
+        '20-min': '#0096ff', // Medium blue for 20-minute  
+        '30-min': '#64c8ff'  // Light blue for 30-minute (farthest)
+      };
+
+      // Add border layers for each time interval (but hidden initially)
+      const timeIntervals = ['30-min', '20-min', '10-min'];
+
+      timeIntervals.forEach((timeInterval, index) => {
+        const layerId = `isochrone-${timeInterval}-border`;
+
+        // Add border layer (initially hidden)
+        this.afterMap.addLayer({
+          id: layerId,
+          type: 'line',
+          source: 'isochrone-source',
+          filter: ['==', 'BUFFER_RADIUS', timeInterval],
+          paint: {
+            'line-color': timeBorders[timeInterval],
+            'line-width': 3,
+            'line-opacity': 1
+          },
+          layout: {
+            'visibility': 'none' // Initially hidden
+          }
+        });
+      });
+
+      // Ensure county layers stay on top
+      this.ensureCountyLayersOnTopAfterMap();
+
+      console.log(`Isochrone layers added to comparison map for ${departmentValue}`);
+    } catch (error) {
+      console.error('Error loading isochrone for comparison map:', error);
+    }
+  }
+
+  // Show/hide specific isochrone layer on after-map
+  toggleIsochroneLayerAfterMap(minutes, isVisible) {
+    if (!this.afterMap) return;
+
+    const layerId = `isochrone-${minutes}-min-border`;
+
+    if (this.afterMap.getLayer(layerId)) {
+      this.afterMap.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+    }
+  }
+
+  // Clear all isochrone layers from after-map
+  clearIsochronesAfterMap() {
+    if (!this.afterMap) return;
+
+    // Define all possible layer IDs
+    const timeIntervals = ['10-min', '20-min', '30-min'];
+
+    // Remove all isochrone layers
+    timeIntervals.forEach(timeInterval => {
+      const layerId = `isochrone-${timeInterval}-border`;
+      if (this.afterMap.getLayer(layerId)) {
+        this.afterMap.removeLayer(layerId);
+      }
+    });
+
+    // Remove the source
+    if (this.afterMap.getSource('isochrone-source')) {
+      this.afterMap.removeSource('isochrone-source');
+    }
+  }
+
+  // Sync existing isochrones from main map when comparison mode is enabled
+  syncExistingIsochrones() {
+    if (!this.isochroneManager || !this.afterMap) return;
+
+    // Get current isochrone data if it exists
+    const currentIsochroneData = this.isochroneManager.getCurrentIsochroneData();
+    if (!currentIsochroneData) return;
+
+    // Get the current department selection
+    const departmentSelect = document.getElementById('departmentSelect');
+    if (!departmentSelect) return;
+
+    const currentDepartment = departmentSelect.value;
+    if (currentDepartment === 'All') return;
+
+    // Load the isochrone data on the comparison map
+    this.loadIsochroneAfterMap(currentDepartment, currentIsochroneData).then(() => {
+      // Sync the visibility of existing checkboxes
+      const drivetimeCheckboxes = {
+        '10': document.getElementById('drivetime-10'),
+        '20': document.getElementById('drivetime-20'),
+        '30': document.getElementById('drivetime-30')
+      };
+
+      // Check each checkbox and sync visibility
+      Object.keys(drivetimeCheckboxes).forEach(minutes => {
+        const checkbox = drivetimeCheckboxes[minutes];
+        if (checkbox && checkbox.checked) {
+          this.toggleIsochroneLayerAfterMap(minutes, true);
+        }
+      });
+    });
   }
 }

@@ -2,6 +2,7 @@
 export class IsochroneManager {
     constructor(mapManager = null) {
         this.mapManager = mapManager;
+        this.comparisonMapManager = null;
         this.currentIsochroneData = null;
         this.isochroneLayers = ['isochrone-10min', 'isochrone-20min', 'isochrone-30min'];
 
@@ -57,6 +58,11 @@ export class IsochroneManager {
         this.mapManager = mapManager;
     }
 
+    // Set the comparison map manager reference
+    setComparisonMapManager(comparisonMapManager) {
+        this.comparisonMapManager = comparisonMapManager;
+    }
+
     // Load isochrone data for a specific department
     async loadIsochrone(departmentValue) {
         if (!this.mapManager || !this.mapManager.getMap()) {
@@ -91,6 +97,11 @@ export class IsochroneManager {
 
             // Add the isochrone layers to the map
             this.addIsochroneLayers(geojsonData);
+            
+            // Also add to comparison map if it's active
+            if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
+                await this.comparisonMapManager.loadIsochroneAfterMap(departmentValue, geojsonData);
+            }
 
             console.log(`Successfully loaded isochrone data for ${departmentValue}`);
             return true;
@@ -161,6 +172,11 @@ export class IsochroneManager {
         if (map.getLayer(layerId)) {
             map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
         }
+
+        // Also toggle on comparison map if it's active
+        if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
+            this.comparisonMapManager.toggleIsochroneLayerAfterMap(minutes, isVisible);
+        }
     }
 
     // Clear all isochrone layers
@@ -185,6 +201,11 @@ export class IsochroneManager {
         // Remove the source
         if (map.getSource('isochrone-source')) {
             map.removeSource('isochrone-source');
+        }
+
+        // Also clear from comparison map if it's active
+        if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
+            this.comparisonMapManager.clearIsochronesAfterMap();
         }
 
         this.currentIsochroneData = null;
