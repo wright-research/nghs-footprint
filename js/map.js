@@ -874,20 +874,16 @@ export class MapManager {
 
         legendTitle.innerHTML = `<h3>Visits by Hexagon<br><span style="font-size: 0.9em; font-weight: normal;">${departmentName}</span></h3>`;
 
-        // Calculate median value
+        // Calculate median value for display
         const medianValue = Math.round((minValue + maxValue) / 2);
 
-        // Calculate the 25th and 75th percentiles
-        const twentyFifthPercentile = Math.round(minValue + (maxValue - minValue) * 0.25);
-        const seventyFifthPercentile = Math.round(minValue + (maxValue - minValue) * 0.75);
-
-        // Create vertical color bar with gradient
+        // Create vertical color bar with gradient (more compact with only 3 values)
         const legendHTML = `
         <div style="display: flex; align-items: center; gap: 12px;">
             <!-- Color bar -->
             <div style="
                 width: 20px;
-                height: 120px;
+                height: 80px;
                 background: linear-gradient(to bottom, 
                     #fef0d9 0%, 
                     #fdcc8a 25%, 
@@ -901,7 +897,7 @@ export class MapManager {
             
             <!-- Value labels -->
             <div style="
-                height: 120px;
+                height: 80px;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
@@ -912,13 +908,7 @@ export class MapManager {
                     ${minValue.toLocaleString()}
                 </div>
                 <div style="display: flex; align-items: center;">
-                    ${twentyFifthPercentile.toLocaleString()}
-                </div>
-                <div style="display: flex; align-items: center;">
                     ${medianValue.toLocaleString()}
-                </div>
-                <div style="display: flex; align-items: center;">
-                    ${seventyFifthPercentile.toLocaleString()}
                 </div>
                 <div style="display: flex; align-items: flex-end;">
                     ${maxValue.toLocaleString()}

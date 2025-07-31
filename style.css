@@ -348,7 +348,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
     background-color: #343a40;
     opacity: var(--opacity-value);
     border-radius: 10px;
-    border: 1px solid #343a40;
+    border: 1px solid #efefef;
     font: 14px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
     padding: 10px;
     position: absolute;

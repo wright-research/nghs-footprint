@@ -7,11 +7,22 @@ export class ComparisonMapManager {
     this.afterMap = null;
     this.compareControl = null;
     this.isComparisonActive = false;
+    this.currentMarker = null; // Track the currently displayed marker on comparison map
+    
+    // Demographic data storage
+    this.demographicData = null;
+    this.hexagonGeometry = null;
     
     // Map configuration matching MapManager
     this.accessToken = "pk.eyJ1Ijoid3dyaWdodDIxIiwiYSI6ImNtYTJ4NWtwdjAwb2oydnEzdjV0anRxeWIifQ.h63WS8JxUedXWYkcNCkSnQ";
     this.defaultCenter = [34.36393354341986, -83.8492021425795];
     this.defaultZoom = 9;
+    
+    // Mapping between comparison dropdown values and CSV column names
+    this.comparisonDataMapping = {
+      'current-population': 'current_pop',
+      'projected-population-change': 'pop_change'
+    };
   }
 
   // Helper function to reverse latitude and longitude coordinates (copied from MapManager)
@@ -57,6 +68,9 @@ export class ComparisonMapManager {
         this.updateComparisonLayer(event.target.value);
       }
     });
+
+    // Load demographic data
+    this.loadDemographicData();
   }
 
   // Set reference to MapManager for coordination
@@ -102,6 +116,19 @@ export class ComparisonMapManager {
       // Sync any existing isochrones from the main map
       this.syncExistingIsochrones();
 
+      // Load the default comparison layer
+      setTimeout(() => {
+        const defaultLayer = this.comparisonSelect.value;
+        if (defaultLayer) {
+          this.updateComparisonLayer(defaultLayer);
+        }
+      }, 200); // Give the map a moment to fully initialize
+
+      // Sync marker with main map's current department selection (after isochrone sync)
+      setTimeout(() => {
+        this.syncMarkerWithMainMap();
+      }, 350); // Give the isochrone sync time to complete first
+
       this.isComparisonActive = true;
       console.log('Comparison mode enabled');
       
@@ -126,6 +153,21 @@ export class ComparisonMapManager {
       // Remove comparison-active class to hide the after-map
       const comparisonContainer = document.getElementById('comparison-container');
       comparisonContainer.classList.remove('comparison-active');
+
+      // Hide comparison legend
+      const comparisonLegend = document.getElementById('comparison-legend');
+      if (comparisonLegend) {
+        comparisonLegend.style.display = 'none';
+      }
+
+      // Hide comparison tooltip
+      const comparisonTooltip = document.getElementById('comparison-tooltip');
+      if (comparisonTooltip) {
+        comparisonTooltip.style.display = 'none';
+      }
+
+      // Remove any existing marker
+      this.removeCurrentMarker();
 
       this.isComparisonActive = false;
       console.log('Comparison mode disabled');
@@ -248,9 +290,20 @@ export class ComparisonMapManager {
 
     console.log('Updating comparison layer to:', layerValue);
     
-    // TODO: Phase 2 - Implement different comparison layers
-    // For now, just log the selected layer
-    // This will be expanded in Phase 2 to load different datasets
+    // Handle different comparison layer types
+    if (layerValue === 'aerial' || layerValue === 'streets') {
+      // For blank layers, just remove any existing choropleth
+      this.removeComparisonChoropleth();
+      return;
+    }
+    
+    // Handle demographic choropleth layers
+    if (this.comparisonDataMapping[layerValue]) {
+      this.updateDemographicChoropleth(layerValue);
+      return;
+    }
+    
+    console.warn(`Comparison layer not yet implemented: ${layerValue}`);
   }
 
   // Get the after-map instance
@@ -364,19 +417,29 @@ export class ComparisonMapManager {
     }
   }
 
-  // Ensure county layers stay on top of other layers in after-map
+  // Ensure proper layer ordering on after-map: choropleth < isochrones < counties
   ensureCountyLayersOnTopAfterMap() {
     if (!this.afterMap) return;
 
-    // Move county boundaries to top if they exist
-    if (this.afterMap.getLayer('county-boundaries')) {
-      this.afterMap.moveLayer('county-boundaries');
-    }
+    // Define the proper layer order (bottom to top)
+    const layerOrder = [
+      // Choropleth layers (bottom)
+      'comparison-choropleth',
+      // Isochrone layers (middle)
+      'isochrone-30-min-border',
+      'isochrone-20-min-border', 
+      'isochrone-10-min-border',
+      // County layers (top)
+      'county-boundaries',
+      'county-label-text'
+    ];
 
-    // Move county labels to top (above boundaries) if they exist
-    if (this.afterMap.getLayer('county-label-text')) {
-      this.afterMap.moveLayer('county-label-text');
-    }
+    // Move layers to proper order if they exist
+    layerOrder.forEach(layerId => {
+      if (this.afterMap.getLayer(layerId)) {
+        this.afterMap.moveLayer(layerId);
+      }
+    });
   }
 
   // Load isochrone data for after-map (sync with main map)
@@ -501,5 +564,600 @@ export class ComparisonMapManager {
         }
       });
     });
+  }
+
+  // Load demographic data for comparison layers
+  async loadDemographicData() {
+    try {
+      console.log('Loading demographic data...');
+
+      // Load both geometry and demographic data in parallel
+      const [geoResponse, dataResponse] = await Promise.all([
+        fetch('Data/Other/hexagon_geos.geojson'),
+        fetch('Data/Hex_demogs/hex_demogs2.csv')
+      ]);
+
+      if (!geoResponse.ok || !dataResponse.ok) {
+        throw new Error('Failed to load demographic data files');
+      }
+
+      // Parse the data
+      this.hexagonGeometry = await geoResponse.json();
+      const csvText = await dataResponse.text();
+      this.demographicData = this.parseCSV(csvText);
+
+      // Join the demographic data with geometry
+      this.joinDemographicData();
+
+      console.log('Demographic data loaded successfully');
+    } catch (error) {
+      console.error('Error loading demographic data:', error);
+    }
+  }
+
+  // Simple CSV parser (adapted from MapManager)
+  parseCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',');
+
+    const data = {};
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',');
+      const hex_Res7 = values[0]; // Use hex_Res7 as the key
+
+      data[hex_Res7] = {};
+      for (let j = 1; j < headers.length; j++) {
+        const value = values[j];
+        // Parse as number if possible, otherwise keep as string
+        data[hex_Res7][headers[j]] = (value && !isNaN(value)) ? parseFloat(value) : value;
+      }
+    }
+
+    return data;
+  }
+
+  // Join demographic data with hexagon geometry
+  joinDemographicData() {
+    if (!this.hexagonGeometry || !this.demographicData) {
+      console.warn('Missing data for demographic join');
+      return;
+    }
+
+    // Get all possible column names from the first data entry
+    const sampleDataKeys = Object.keys(Object.values(this.demographicData)[0] || {});
+
+    // Add demographic data to each hexagon feature
+    this.hexagonGeometry.features.forEach(feature => {
+      const h3_id = feature.properties.h3_id;
+      const demoData = this.demographicData[h3_id] || {};
+
+      // Ensure all columns have default values if missing
+      sampleDataKeys.forEach(column => {
+        feature.properties[column] = demoData[column] !== undefined ? demoData[column] : null;
+      });
+    });
+
+    console.log('Demographic data joined successfully');
+  }
+
+  // Update demographic choropleth layer on comparison map
+  updateDemographicChoropleth(layerValue) {
+    if (!this.hexagonGeometry || !this.demographicData || !this.afterMap) {
+      console.warn('Demographic data not fully loaded yet');
+      return;
+    }
+
+    // Get the column name for this layer
+    const columnName = this.comparisonDataMapping[layerValue];
+    if (!columnName) {
+      console.warn(`No column mapping found for: ${layerValue}`);
+      return;
+    }
+
+    // Filter hexagons to only include those with valid data
+    const filteredFeatures = this.hexagonGeometry.features
+      .filter(f => {
+        const value = f.properties[columnName];
+        return value !== null && value !== undefined && value !== '' && !isNaN(value);
+      });
+
+    if (filteredFeatures.length === 0) {
+      console.warn(`No valid data found for column: ${columnName}`);
+      this.removeComparisonChoropleth();
+      return;
+    }
+
+    // Calculate data ranges for styling from filtered features
+    const values = filteredFeatures.map(f => parseFloat(f.properties[columnName]));
+    const maxValue = Math.max(...values);
+    const minValue = Math.min(...values);
+
+    // Create filtered GeoJSON
+    const filteredGeometry = {
+      type: 'FeatureCollection',
+      features: filteredFeatures
+    };
+
+    // Remove existing comparison choropleth layers
+    this.removeComparisonChoropleth();
+
+    // Add hexagon source with filtered data
+    this.afterMap.addSource('comparison-choropleth', {
+      type: 'geojson',
+      data: filteredGeometry
+    });
+
+    // Create color expression based on demographic values with layer-specific colors
+    const colorExpression = this.getColorExpression(layerValue, columnName, minValue, maxValue);
+
+    // Add hexagon choropleth layer (before county layers to keep them on top)
+    const beforeLayer = this.afterMap.getLayer('county-boundaries') ? 'county-boundaries' : undefined;
+    this.afterMap.addLayer({
+      id: 'comparison-choropleth',
+      type: 'fill',
+      source: 'comparison-choropleth',
+      paint: {
+        'fill-color': colorExpression,
+        'fill-opacity': 0.7,
+        'fill-outline-color': '#cccccc' // Light gray outline by default
+      }
+    }, beforeLayer);
+
+    // Add hover highlight for comparison map
+    this.addComparisonHoverHighlight();
+
+    // Ensure county layers stay on top after adding choropleth
+    this.ensureCountyLayersOnTopAfterMap();
+
+    // Add hover effect
+    this.setupComparisonHover(columnName, layerValue);
+
+    console.log(`Demographic choropleth updated for: ${columnName}`, {
+      minValue,
+      maxValue,
+      hexagonCount: filteredFeatures.length
+    });
+
+    // Update comparison legend
+    this.updateComparisonLegend(layerValue, columnName, minValue, maxValue);
+  }
+
+  // Remove comparison choropleth layers
+  removeComparisonChoropleth() {
+    if (!this.afterMap) return;
+
+    // Remove event listeners to avoid conflicts when switching layers
+    this.afterMap.off('mousemove', 'comparison-choropleth');
+    this.afterMap.off('mouseleave', 'comparison-choropleth');
+
+    // Remove layers if they exist
+    if (this.afterMap.getLayer('comparison-hover-outline')) {
+      this.afterMap.removeLayer('comparison-hover-outline');
+    }
+    if (this.afterMap.getLayer('comparison-choropleth')) {
+      this.afterMap.removeLayer('comparison-choropleth');
+    }
+    
+    // Remove sources if they exist
+    if (this.afterMap.getSource('comparison-hover-hex')) {
+      this.afterMap.removeSource('comparison-hover-hex');
+    }
+    if (this.afterMap.getSource('comparison-choropleth')) {
+      this.afterMap.removeSource('comparison-choropleth');
+    }
+
+    // Hide tooltip when removing choropleth
+    const comparisonTooltip = document.getElementById('comparison-tooltip');
+    if (comparisonTooltip) {
+      comparisonTooltip.style.display = 'none';
+    }
+  }
+
+  // Add hover highlight source and layer for comparison map
+  addComparisonHoverHighlight() {
+    if (!this.afterMap) return;
+
+    // Add a source for the highlighted hex
+    this.afterMap.addSource("comparison-hover-hex", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: []
+      }
+    });
+
+    // Add hover highlight layer (above choropleth, below county layers)
+    const hoverBeforeLayer = this.afterMap.getLayer('county-boundaries') ? 'county-boundaries' : undefined;
+    this.afterMap.addLayer({
+      id: "comparison-hover-outline",
+      type: "line",
+      source: "comparison-hover-hex",
+      paint: {
+        "line-color": "#000000",
+        "line-width": 2,
+        "line-opacity": 0.9,
+        "line-opacity-transition": {
+          duration: 300,
+          delay: 0
+        },
+        "line-width-transition": {
+          duration: 300,
+          delay: 0
+        }
+      }
+    }, hoverBeforeLayer);
+  }
+
+  // Setup hover effects for comparison choropleth
+  setupComparisonHover(columnName, layerValue) {
+    if (!this.afterMap) return;
+
+    let hoveredHexId = null;
+    
+    // Get or create comparison tooltip
+    let comparisonTooltip = document.getElementById('comparison-tooltip');
+    if (!comparisonTooltip) {
+      comparisonTooltip = this.createComparisonTooltip();
+    }
+
+    const tooltipLabel = comparisonTooltip.querySelector('#comparison-tooltip-label');
+    const tooltipValue = comparisonTooltip.querySelector('#comparison-tooltip-value');
+
+    // Track hover over comparison choropleth layer
+    this.afterMap.on("mousemove", "comparison-choropleth", (e) => {
+      this.afterMap.getCanvas().style.cursor = 'pointer';
+
+      if (e.features.length > 0) {
+        const feature = e.features[0];
+        const h3_id = feature.properties.h3_id;
+
+        // Only update if we're hovering over a new hexagon
+        if (h3_id !== hoveredHexId) {
+          hoveredHexId = h3_id;
+
+          // Update the hover source with the current feature
+          this.afterMap.getSource("comparison-hover-hex").setData({
+            type: "FeatureCollection",
+            features: [feature]
+          });
+        }
+
+        // Update tooltip with demographic data
+        if (tooltipLabel && tooltipValue) {
+          const value = feature.properties[columnName] || 0;
+          const label = this.getTooltipLabel(layerValue);
+          
+          // Update tooltip content
+          tooltipLabel.textContent = label + ':';
+          tooltipValue.textContent = this.formatTooltipValue(value, layerValue);
+
+          // Smart positioning with edge detection
+          const mouseX = e.originalEvent.pageX;
+          const mouseY = e.originalEvent.pageY;
+          const windowWidth = window.innerWidth;
+          const tooltipOffset = 15; // Distance from cursor
+          const edgeBuffer = 200; // Switch sides when this close to edge
+
+          // Show tooltip first to get dimensions
+          comparisonTooltip.style.display = 'block';
+          const tooltipWidth = comparisonTooltip.offsetWidth;
+
+          // Check if tooltip would go off right edge
+          if (mouseX + tooltipWidth + tooltipOffset > windowWidth - edgeBuffer) {
+            // Position to the left of cursor
+            comparisonTooltip.style.left = (mouseX - tooltipWidth - tooltipOffset) + 'px';
+          } else {
+            // Position to the right of cursor (default)
+            comparisonTooltip.style.left = (mouseX + tooltipOffset) + 'px';
+          }
+
+          comparisonTooltip.style.top = (mouseY - tooltipOffset) + 'px';
+        }
+      }
+    });
+
+    // Hide hover highlight and tooltip when not hovering
+    this.afterMap.on("mouseleave", "comparison-choropleth", () => {
+      this.afterMap.getCanvas().style.cursor = '';
+      hoveredHexId = null;
+
+      // Clear the hover source
+      this.afterMap.getSource("comparison-hover-hex").setData({
+        type: "FeatureCollection",
+        features: []
+      });
+
+      // Hide tooltip
+      if (comparisonTooltip) {
+        comparisonTooltip.style.display = 'none';
+      }
+    });
+  }
+
+  // Create comparison tooltip element
+  createComparisonTooltip() {
+    const tooltip = document.createElement('div');
+    tooltip.id = 'comparison-tooltip';
+    tooltip.style.cssText = `
+      position: absolute;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+      white-space: nowrap;
+    `;
+    
+    tooltip.innerHTML = `
+      <strong><span id="comparison-tooltip-label">Population</span></strong> 
+      <span id="comparison-tooltip-value">0</span>
+    `;
+    
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  // Get tooltip label based on layer type
+  getTooltipLabel(layerValue) {
+    const labels = {
+      'current-population': 'Population',
+      'projected-population-change': 'Percent Change',
+      'home-sales': 'Home Sales',
+      'median-home-price': 'Median Price',
+      'median-income': 'Median Income'
+    };
+    
+    return labels[layerValue] || 'Value';
+  }
+
+  // Format tooltip value based on layer type
+  formatTooltipValue(value, layerValue) {
+    if (value === null || value === undefined || value === '') {
+      return 'No data';
+    }
+    
+    // Handle different formatting based on layer type
+    switch (layerValue) {
+      case 'current-population':
+        return Math.round(value).toLocaleString();
+      
+      case 'projected-population-change':
+        // Convert to percentage (assuming the value is a decimal like 0.52 for 52%)
+        return (value).toFixed(1) + '%';
+      
+      case 'median-home-price':
+        return '$' + Math.round(value).toLocaleString();
+      
+      case 'median-income':
+        return '$' + Math.round(value).toLocaleString();
+      
+      case 'home-sales':
+        return Math.round(value).toLocaleString();
+      
+      default:
+        return value.toLocaleString();
+    }
+  }
+
+  // Get color expression based on layer type
+  getColorExpression(layerValue, columnName, minValue, maxValue) {
+    // Define color ramps for different layer types
+    const colorRamps = {
+      'current-population': {
+        colors: [
+          '#f7fbff', // Very light blue
+          '#c6dbef', // Light blue
+          '#6baed6', // Medium blue
+          '#2171b5', // Dark blue
+          '#08306b'  // Very dark blue
+        ]
+      },
+      'projected-population-change': {
+        colors: [
+          '#fcfbfd', // Very light purple
+          '#dadaeb', // Light purple
+          '#9e9ac8', // Medium purple
+          '#6a51a3', // Dark purple
+          '#3f007d'  // Very dark purple
+        ]
+      }
+    };
+
+    // Get the appropriate color ramp or fall back to default (yellow-red)
+    const ramp = colorRamps[layerValue] || {
+      colors: ['#fef0d9', '#fdcc8a', '#fc8d59', '#e34a33', '#b30000']
+    };
+
+    return [
+      'interpolate',
+      ['linear'],
+      ['to-number', ['get', columnName]], // Ensure it's treated as number
+      minValue, ramp.colors[0],           // Lightest color for low values
+      maxValue * 0.25, ramp.colors[1],    // Light color
+      maxValue * 0.5, ramp.colors[2],     // Medium color
+      maxValue * 0.75, ramp.colors[3],    // Dark color
+      maxValue, ramp.colors[4]            // Darkest color for high values
+    ];
+  }
+
+  // Format legend values with appropriate symbols based on layer type
+  formatLegendValue(value, layerValue) {
+    if (value === null || value === undefined) {
+      return 'No data';
+    }
+
+    const formattedNumber = Math.round(value).toLocaleString();
+
+    switch (layerValue) {
+      case 'projected-population-change':
+        return formattedNumber + '%';
+      
+      case 'median-home-price':
+      case 'median-income':
+        return '$' + formattedNumber;
+      
+      case 'current-population':
+      case 'home-sales':
+      default:
+        return formattedNumber;
+    }
+  }
+
+  // Update comparison legend
+  updateComparisonLegend(layerValue, columnName, minValue, maxValue) {
+    const legendContainer = document.getElementById('comparison-legend');
+    
+    if (!legendContainer) {
+      console.warn('Comparison legend container not found');
+      return;
+    }
+
+    // Show the legend
+    legendContainer.style.display = 'block';
+
+    // Format layer name for display
+    const displayName = this.formatLayerName(layerValue);
+
+        // Calculate median value for display
+    const medianValue = Math.round((minValue + maxValue) / 2);
+
+    // Get the appropriate color gradient for this layer
+    const gradient = this.getLegendGradient(layerValue);
+
+    // Create legend HTML (more compact with only 3 values)
+    const legendHTML = `
+        <h3 id="comparison-legend-title">${displayName}</h3>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <!-- Color bar -->
+            <div style="
+                width: 20px;
+                height: 80px;
+                background: ${gradient};
+                border: 1px solid rgba(0, 0, 0, 0.3);
+                flex-shrink: 0;
+            "></div>
+            
+            <!-- Value labels -->
+            <div style="
+                height: 80px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                font-size: 12px;
+                color: #fff;
+                text-align: left;
+            ">
+                <div style="text-align: left;">${this.formatLegendValue(minValue, layerValue)}</div>
+                <div style="text-align: left;">${this.formatLegendValue(medianValue, layerValue)}</div>
+                <div style="text-align: left;">${this.formatLegendValue(maxValue, layerValue)}</div>
+            </div>
+        </div>
+    `;
+    
+    legendContainer.innerHTML = legendHTML;
+  }
+
+  // Get CSS gradient for legend based on layer type
+  getLegendGradient(layerValue) {
+    const gradients = {
+      'current-population': 'linear-gradient(to bottom, #f7fbff 0%, #c6dbef 25%, #6baed6 50%, #2171b5 75%, #08306b 100%)',
+      'projected-population-change': 'linear-gradient(to bottom, #fcfbfd 0%, #dadaeb 25%, #9e9ac8 50%, #6a51a3 75%, #3f007d 100%)'
+    };
+
+    // Return the appropriate gradient or fall back to default (yellow-red)
+    return gradients[layerValue] || 'linear-gradient(to bottom, #fef0d9 0%, #fdcc8a 25%, #fc8d59 50%, #e34a33 75%, #b30000 100%)';
+  }
+
+  // Format layer name for display
+  formatLayerName(layerValue) {
+    const layerNames = {
+      'current-population': 'Current Population',
+      'projected-population-change': 'Projected Population Change',
+      'home-sales': 'Home Sales',
+      'median-home-price': 'Median Home Price',
+      'median-income': 'Median Income'
+    };
+
+    return layerNames[layerValue] || layerValue;
+  }
+
+  // Custom marker element creation function (copied from MapManager)
+  createCustomMarker(scale = 1.0) {
+    const el = document.createElement('div');
+    el.className = 'custom-marker';
+    el.style.backgroundImage = 'url(Assets/nghs_logo.png)';
+    el.style.backgroundSize = '80% 80%';
+    el.style.backgroundPosition = 'center';
+    el.style.backgroundRepeat = 'no-repeat';
+    el.style.width = `${36 * scale}px`;
+    el.style.height = `${30 * scale}px`;
+    el.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+    el.style.borderRadius = '50%';
+    el.style.border = '2px solid #343a40';
+    return el;
+  }
+
+  // Add or update location marker based on selected department (synced from main map)
+  updateLocationMarker(departmentValue, centerCoords) {
+    // Only proceed if comparison map is active and after-map exists
+    if (!this.isComparisonActive || !this.afterMap) {
+      return;
+    }
+
+    // Remove existing marker if it exists
+    if (this.currentMarker) {
+      this.currentMarker.remove();
+      this.currentMarker = null;
+    }
+
+    // Don't show marker for "All" selection
+    if (departmentValue === 'All') {
+      return;
+    }
+
+    // Create and add new marker for specific location
+    const markerElement = this.createCustomMarker(1.2); // Slightly larger scale
+
+    // Convert coordinates to Mapbox format (longitude, latitude) using the same location settings as main map
+    const markerCoords = ComparisonMapManager.LatLngUtils.reverse(centerCoords);
+
+    // Create the marker
+    this.currentMarker = new mapboxgl.Marker(markerElement)
+      .setLngLat(markerCoords)
+      .addTo(this.afterMap);
+
+    console.log(`Comparison map marker added for: ${departmentValue}`, markerCoords);
+  }
+
+  // Remove current marker (if any)
+  removeCurrentMarker() {
+    if (this.currentMarker) {
+      this.currentMarker.remove();
+      this.currentMarker = null;
+      console.log('Comparison map marker removed');
+    }
+  }
+
+  // Sync marker with main map's current department selection
+  syncMarkerWithMainMap() {
+    if (!this.mapManager || !this.isComparisonActive) {
+      return;
+    }
+
+    // Get current department selection from the main map
+    const departmentSelect = document.getElementById('departmentSelect');
+    if (!departmentSelect) return;
+
+    const currentDepartment = departmentSelect.value;
+    
+    // Import location settings from MapManager (we need to access them somehow)
+    // Since MapManager.locationSettings is static, we can reference it directly
+    if (this.mapManager.constructor.locationSettings && this.mapManager.constructor.locationSettings[currentDepartment]) {
+      const locationConfig = this.mapManager.constructor.locationSettings[currentDepartment];
+      this.updateLocationMarker(currentDepartment, locationConfig.center);
+    }
   }
 }

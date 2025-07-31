@@ -6,6 +6,7 @@ import { IsochroneManager } from './isochrones.js';
 import { loadPermitData } from './permits.js';
 import { loadDrivetimeStats } from './drivetimeStats.js';
 import { ComparisonMapManager } from './comparisonMap.js';
+import { PossibleSitesManager } from './possibleSites.js';
 
 class NGHSFootprintApp {
     constructor() {
@@ -14,6 +15,7 @@ class NGHSFootprintApp {
         this.uiControlsManager = new UIControlsManager();
         this.isochroneManager = new IsochroneManager();
         this.comparisonMapManager = new ComparisonMapManager();
+        this.possibleSitesManager = new PossibleSitesManager();
         this.isInitialized = false;
     }
 
@@ -59,11 +61,16 @@ class NGHSFootprintApp {
             // Initialize comparison map manager
             this.comparisonMapManager.initialize();
 
+            // Initialize possible sites manager
+            this.possibleSitesManager.initialize();
+
             // Connect managers for coordination
             this.uiControlsManager.setMapManager(this.mapManager);
             this.isochroneManager.setMapManager(this.mapManager);
             this.uiControlsManager.setIsochroneManager(this.isochroneManager);
+            this.uiControlsManager.setComparisonMapManager(this.comparisonMapManager);
             this.comparisonMapManager.setMapManager(this.mapManager);
+            this.possibleSitesManager.setMapManager(this.mapManager);
             
             // Connect isochrone manager with comparison map manager for sync
             this.isochroneManager.setComparisonMapManager(this.comparisonMapManager);
@@ -138,6 +145,11 @@ class NGHSFootprintApp {
     // Get isochrone manager (for use by other modules)
     getIsochroneManager() {
         return this.isochroneManager;
+    }
+
+    // Get possible sites manager (for use by other modules)
+    getPossibleSitesManager() {
+        return this.possibleSitesManager;
     }
 
     // Check if app is fully initialized

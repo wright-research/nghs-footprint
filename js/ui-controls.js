@@ -6,6 +6,7 @@ export class UIControlsManager {
         this.drivetimeHeader = null;
         this.mapManager = mapManager;
         this.isochroneManager = null;
+        this.comparisonMapManager = null;
         this.drivetimeCheckboxes = {
             '10': null,
             '20': null,
@@ -91,6 +92,18 @@ export class UIControlsManager {
         // Update map view if mapManager is available
         if (this.mapManager) {
             this.mapManager.updateMapView(selectedValue);
+        }
+
+        // Update comparison map marker if comparisonMapManager is available
+        if (this.comparisonMapManager && this.mapManager) {
+            // Get location settings from MapManager to pass to comparison map
+            const locationConfig = this.mapManager.constructor.locationSettings[selectedValue];
+            if (locationConfig) {
+                this.comparisonMapManager.updateLocationMarker(selectedValue, locationConfig.center);
+            } else if (selectedValue === 'All') {
+                // Remove marker when 'All' is selected
+                this.comparisonMapManager.removeCurrentMarker();
+            }
         }
 
         // Clear and disable/enable checkboxes based on selection
@@ -229,6 +242,11 @@ export class UIControlsManager {
     // Set the isochrone manager reference (for coordination between modules)
     setIsochroneManager(isochroneManager) {
         this.isochroneManager = isochroneManager;
+    }
+
+    // Set the comparison map manager reference (for coordination between modules)
+    setComparisonMapManager(comparisonMapManager) {
+        this.comparisonMapManager = comparisonMapManager;
     }
 
     // Programmatically set department selection
