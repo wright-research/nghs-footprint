@@ -21,8 +21,14 @@ export class ComparisonMapManager {
     // Mapping between comparison dropdown values and CSV column names
     this.comparisonDataMapping = {
       'current-population': 'current_pop',
-      'projected-population-change': 'pop_change'
+      'projected-population-change': 'pop_change',
+      'home-sales': 'total_sales',
+      'median-home-price': 'median_price_sf',
+      'median-income': 'median_income'
     };
+
+    // DOT Projects data
+    this.dotProjectsData = null;
   }
 
   // Helper function to reverse latitude and longitude coordinates (copied from MapManager)
@@ -69,8 +75,11 @@ export class ComparisonMapManager {
       }
     });
 
-    // Load demographic data
-    this.loadDemographicData();
+          // Load demographic data
+      this.loadDemographicData();
+
+      // Load DOT projects data
+      this.loadDotProjectsData();
   }
 
   // Set reference to MapManager for coordination
@@ -168,6 +177,10 @@ export class ComparisonMapManager {
 
       // Remove any existing marker
       this.removeCurrentMarker();
+
+      // Clean up any active layers
+      this.removeComparisonChoropleth();
+      this.removeDotProjects();
 
       this.isComparisonActive = false;
       console.log('Comparison mode disabled');
@@ -292,14 +305,25 @@ export class ComparisonMapManager {
     
     // Handle different comparison layer types
     if (layerValue === 'aerial' || layerValue === 'streets') {
-      // For blank layers, just remove any existing choropleth
+      // For blank layers, just remove any existing choropleth and hide legend
       this.removeComparisonChoropleth();
+      this.removeDotProjects();
+      this.hideComparisonLegend();
       return;
     }
     
     // Handle demographic choropleth layers
     if (this.comparisonDataMapping[layerValue]) {
+      this.removeDotProjects();
       this.updateDemographicChoropleth(layerValue);
+      return;
+    }
+
+    // Handle DOT Projects layers
+    if (layerValue === 'dot-under-construction' || layerValue === 'dot-pre-construction') {
+      this.removeComparisonChoropleth();
+      this.hideComparisonLegend();
+      this.updateDotProjectsLayer(layerValue);
       return;
     }
     
@@ -429,6 +453,10 @@ export class ComparisonMapManager {
       'isochrone-30-min-border',
       'isochrone-20-min-border', 
       'isochrone-10-min-border',
+      // DOT projects lines (above isochrones)
+      'dot-projects-lines',
+      // Hover highlight (above choropleth, isochrones, and DOT projects)
+      'comparison-hover-outline',
       // County layers (top)
       'county-boundaries',
       'county-label-text'
@@ -598,18 +626,27 @@ export class ComparisonMapManager {
   // Simple CSV parser (adapted from MapManager)
   parseCSV(csvText) {
     const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',');
+    // Trim whitespace and carriage returns from header names
+    const headers = lines[0].split(',').map(header => header.trim().replace(/\r$/g, ''));
 
     const data = {};
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',');
-      const hex_Res7 = values[0]; // Use hex_Res7 as the key
+      const hex_Res7 = values[0].trim(); // Also trim the key
 
       data[hex_Res7] = {};
       for (let j = 1; j < headers.length; j++) {
-        const value = values[j];
-        // Parse as number if possible, otherwise keep as string
-        data[hex_Res7][headers[j]] = (value && !isNaN(value)) ? parseFloat(value) : value;
+        const value = values[j] ? values[j].trim() : ''; // Trim values too
+        const headerName = headers[j];
+        
+        // Parse as number if possible, set to null for empty strings, otherwise keep as string
+        if (value === '' || value === undefined) {
+          data[hex_Res7][headerName] = null;
+        } else if (!isNaN(value)) {
+          data[hex_Res7][headerName] = parseFloat(value);
+        } else {
+          data[hex_Res7][headerName] = value;
+        }
       }
     }
 
@@ -625,11 +662,23 @@ export class ComparisonMapManager {
 
     // Get all possible column names from the first data entry
     const sampleDataKeys = Object.keys(Object.values(this.demographicData)[0] || {});
-
+    let successfulJoins = 0;
+    
     // Add demographic data to each hexagon feature
     this.hexagonGeometry.features.forEach(feature => {
+      // Try both possible key names
       const h3_id = feature.properties.h3_id;
-      const demoData = this.demographicData[h3_id] || {};
+      const hex_Res7 = feature.properties.hex_Res7;
+      
+      // Check which key exists in demographic data
+      let demoData = {};
+      if (this.demographicData[h3_id]) {
+        demoData = this.demographicData[h3_id];
+        successfulJoins++;
+      } else if (this.demographicData[hex_Res7]) {
+        demoData = this.demographicData[hex_Res7];
+        successfulJoins++;
+      }
 
       // Ensure all columns have default values if missing
       sampleDataKeys.forEach(column => {
@@ -720,6 +769,242 @@ export class ComparisonMapManager {
 
     // Update comparison legend
     this.updateComparisonLegend(layerValue, columnName, minValue, maxValue);
+  }
+
+  // Load DOT projects data
+  async loadDotProjectsData() {
+    try {
+      console.log('Loading DOT projects data...');
+      
+      const response = await fetch('Data/Other/gdot_projects.geojson');
+      if (!response.ok) {
+        throw new Error('Failed to load DOT projects data');
+      }
+
+      this.dotProjectsData = await response.json();
+      console.log('DOT projects data loaded successfully');
+    } catch (error) {
+      console.error('Error loading DOT projects data:', error);
+    }
+  }
+
+  // Update DOT projects layer on comparison map
+  updateDotProjectsLayer(layerValue) {
+    if (!this.dotProjectsData || !this.afterMap) {
+      console.warn('DOT projects data not fully loaded yet');
+      return;
+    }
+
+    // Remove any existing DOT projects layers
+    this.removeDotProjects();
+
+    // Determine which status to show based on layer value
+    const targetStatus = layerValue === 'dot-under-construction' ? 'UNDER-CONSTRUCTION' : 'PRE-CONSTRUCTION';
+    const lineColor = layerValue === 'dot-under-construction' ? '#22c55e' : '#dc2626'; // Green for under construction, red for pre-construction
+
+    // Filter features by status
+    const filteredFeatures = this.dotProjectsData.features.filter(feature => 
+      feature.properties.Status === targetStatus
+    );
+
+    if (filteredFeatures.length === 0) {
+      console.warn(`No DOT projects found with status: ${targetStatus}`);
+      return;
+    }
+
+    // Create filtered GeoJSON
+    const filteredData = {
+      type: 'FeatureCollection',
+      features: filteredFeatures
+    };
+
+    // Add DOT projects source
+    this.afterMap.addSource('dot-projects', {
+      type: 'geojson',
+      data: filteredData
+    });
+
+    // Add DOT projects layer with appropriate color and hover effects
+    const beforeLayer = this.afterMap.getLayer('county-boundaries') ? 'county-boundaries' : undefined;
+    this.afterMap.addLayer({
+      id: 'dot-projects-lines',
+      type: 'line',
+      source: 'dot-projects',
+      paint: {
+        'line-color': lineColor,
+        'line-width': 6,
+        'line-opacity': 1
+      }
+    }, beforeLayer);
+
+    // Ensure proper layer ordering
+    this.ensureCountyLayersOnTopAfterMap();
+
+    // Add hover and click functionality
+    this.setupDotProjectsInteraction();
+
+    console.log(`DOT projects layer updated: ${targetStatus}, ${filteredFeatures.length} features`);
+  }
+
+  // Setup hover and click interactions for DOT projects
+  setupDotProjectsInteraction() {
+    if (!this.afterMap) return;
+
+    let hoveredFeatureId = null;
+
+    // Create tooltip if it doesn't exist
+    let dotTooltip = document.getElementById('dot-projects-tooltip');
+    if (!dotTooltip) {
+      dotTooltip = this.createDotProjectsTooltip();
+    }
+
+    // Change cursor on hover
+    this.afterMap.on('mouseenter', 'dot-projects-lines', () => {
+      this.afterMap.getCanvas().style.cursor = 'pointer';
+    });
+
+    // Handle hover - show tooltip and set hover state for line width increase
+    this.afterMap.on('mousemove', 'dot-projects-lines', (e) => {
+      if (e.features.length > 0) {
+        const feature = e.features[0];
+        const featureId = feature.id;
+
+        // Only update if we're hovering over a new feature
+        if (featureId !== hoveredFeatureId) {
+          // Remove hover state from previously hovered feature
+          if (hoveredFeatureId !== null) {
+            this.afterMap.setFeatureState(
+              { source: 'dot-projects', id: hoveredFeatureId },
+              { hover: false }
+            );
+          }
+
+          // Set hover state for current feature (increases line width)
+          this.afterMap.setFeatureState(
+            { source: 'dot-projects', id: featureId },
+            { hover: true }
+          );
+
+          hoveredFeatureId = featureId;
+        }
+
+        const description = feature.properties.Desc_short || 'DOT Project';
+
+        // Update tooltip content
+        dotTooltip.textContent = description;
+
+        // Position tooltip
+        const mouseX = e.originalEvent.pageX;
+        const mouseY = e.originalEvent.pageY;
+        const tooltipOffset = 15;
+        const windowWidth = window.innerWidth;
+        const edgeBuffer = 200;
+
+        // Show tooltip first to get dimensions
+        dotTooltip.style.display = 'block';
+        const tooltipWidth = dotTooltip.offsetWidth;
+
+        // Check if tooltip would go off right edge
+        if (mouseX + tooltipWidth + tooltipOffset > windowWidth - edgeBuffer) {
+          // Position to the left of cursor
+          dotTooltip.style.left = (mouseX - tooltipWidth - tooltipOffset) + 'px';
+        } else {
+          // Position to the right of cursor (default)
+          dotTooltip.style.left = (mouseX + tooltipOffset) + 'px';
+        }
+
+        dotTooltip.style.top = (mouseY - tooltipOffset) + 'px';
+      }
+    });
+
+    // Handle mouse leave - hide tooltip, reset cursor, and remove hover state
+    this.afterMap.on('mouseleave', 'dot-projects-lines', () => {
+      this.afterMap.getCanvas().style.cursor = '';
+      
+      // Remove hover state from currently hovered feature
+      if (hoveredFeatureId !== null) {
+        this.afterMap.setFeatureState(
+          { source: 'dot-projects', id: hoveredFeatureId },
+          { hover: false }
+        );
+        hoveredFeatureId = null;
+      }
+
+      if (dotTooltip) {
+        dotTooltip.style.display = 'none';
+      }
+    });
+
+    // Handle click - open URL in new tab
+    this.afterMap.on('click', 'dot-projects-lines', (e) => {
+      if (e.features.length > 0) {
+        const feature = e.features[0];
+        const url = feature.properties.URL;
+        
+        if (url) {
+          window.open(url, '_blank');
+        }
+      }
+    });
+  }
+
+  // Create tooltip element for DOT projects
+  createDotProjectsTooltip() {
+    const tooltip = document.createElement('div');
+    tooltip.id = 'dot-projects-tooltip';
+    tooltip.style.cssText = `
+      position: absolute;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      pointer-events: none;
+      z-index: 1000;
+      max-width: 300px;
+      word-wrap: break-word;
+      display: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  // Remove DOT projects layers and cleanup
+  removeDotProjects() {
+    if (!this.afterMap) return;
+
+    // Clean up any remaining feature states before removing the source
+    if (this.afterMap.getSource('dot-projects')) {
+      // Reset all feature states to ensure clean removal
+      try {
+        this.afterMap.removeFeatureState({ source: 'dot-projects' });
+      } catch (error) {
+        // Ignore errors if source doesn't exist or features are already cleaned up
+      }
+    }
+
+    // Remove event listeners
+    this.afterMap.off('mouseenter', 'dot-projects-lines');
+    this.afterMap.off('mousemove', 'dot-projects-lines');
+    this.afterMap.off('mouseleave', 'dot-projects-lines');
+    this.afterMap.off('click', 'dot-projects-lines');
+
+    // Remove layer and source
+    if (this.afterMap.getLayer('dot-projects-lines')) {
+      this.afterMap.removeLayer('dot-projects-lines');
+    }
+    if (this.afterMap.getSource('dot-projects')) {
+      this.afterMap.removeSource('dot-projects');
+    }
+
+    // Hide tooltip
+    const dotTooltip = document.getElementById('dot-projects-tooltip');
+    if (dotTooltip) {
+      dotTooltip.style.display = 'none';
+    }
   }
 
   // Remove comparison choropleth layers
@@ -906,7 +1191,7 @@ export class ComparisonMapManager {
       'current-population': 'Population',
       'projected-population-change': 'Percent Change',
       'home-sales': 'Home Sales',
-      'median-home-price': 'Median Price',
+      'median-home-price': 'Median Price / SF',
       'median-income': 'Median Income'
     };
     
@@ -963,6 +1248,33 @@ export class ComparisonMapManager {
           '#6a51a3', // Dark purple
           '#3f007d'  // Very dark purple
         ]
+      },
+      'home-sales': {
+        colors: [
+          '#fef5f3', // Very light red
+          '#fdbcb4', // Light red
+          '#fc8d59', // Medium red
+          '#e34a33', // Dark red
+          '#b30000'  // Very dark red
+        ]
+      },
+      'median-home-price': {
+        colors: [
+          '#f7fcf5', // Very light green
+          '#c7e9c0', // Light green
+          '#74c476', // Medium green
+          '#31a354', // Dark green
+          '#006d2c'  // Very dark green
+        ]
+      },
+      'median-income': {
+        colors: [
+          '#f7fcf5', // Very light green
+          '#c7e9c0', // Light green
+          '#74c476', // Medium green
+          '#31a354', // Dark green
+          '#006d2c'  // Very dark green
+        ]
       }
     };
 
@@ -1003,6 +1315,14 @@ export class ComparisonMapManager {
       case 'home-sales':
       default:
         return formattedNumber;
+    }
+  }
+
+  // Hide comparison legend
+  hideComparisonLegend() {
+    const legendContainer = document.getElementById('comparison-legend');
+    if (legendContainer) {
+      legendContainer.style.display = 'none';
     }
   }
 
@@ -1064,7 +1384,10 @@ export class ComparisonMapManager {
   getLegendGradient(layerValue) {
     const gradients = {
       'current-population': 'linear-gradient(to bottom, #f7fbff 0%, #c6dbef 25%, #6baed6 50%, #2171b5 75%, #08306b 100%)',
-      'projected-population-change': 'linear-gradient(to bottom, #fcfbfd 0%, #dadaeb 25%, #9e9ac8 50%, #6a51a3 75%, #3f007d 100%)'
+      'projected-population-change': 'linear-gradient(to bottom, #fcfbfd 0%, #dadaeb 25%, #9e9ac8 50%, #6a51a3 75%, #3f007d 100%)',
+      'home-sales': 'linear-gradient(to bottom, #fef5f3 0%, #fdbcb4 25%, #fc8d59 50%, #e34a33 75%, #b30000 100%)',
+      'median-home-price': 'linear-gradient(to bottom, #f7fcf5 0%, #c7e9c0 25%, #74c476 50%, #31a354 75%, #006d2c 100%)',
+      'median-income': 'linear-gradient(to bottom, #f7fcf5 0%, #c7e9c0 25%, #74c476 50%, #31a354 75%, #006d2c 100%)'
     };
 
     // Return the appropriate gradient or fall back to default (yellow-red)
@@ -1076,8 +1399,8 @@ export class ComparisonMapManager {
     const layerNames = {
       'current-population': 'Current Population',
       'projected-population-change': 'Projected Population Change',
-      'home-sales': 'Home Sales',
-      'median-home-price': 'Median Home Price',
+      'home-sales': 'Home Sales (since 2024)',
+      'median-home-price': 'Median Home Sale<br>Price / SF (since 2024)',
       'median-income': 'Median Income'
     };
 
