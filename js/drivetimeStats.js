@@ -30,6 +30,48 @@ function setupDepartmentListener() {
     const select = document.getElementById('departmentSelect');
     if (!select) return;
     select.addEventListener('sl-change', handleDepartmentChange);
+    
+    // Also listen for drivetime checkbox changes
+    setupDrivetimeListeners();
+}
+
+// Listen for drivetime checkbox changes to update table styling
+function setupDrivetimeListeners() {
+    const drivetimeCheckboxes = ['drivetime-10', 'drivetime-20', 'drivetime-30'];
+    
+    drivetimeCheckboxes.forEach(checkboxId => {
+        const checkbox = document.getElementById(checkboxId);
+        if (checkbox) {
+            checkbox.addEventListener('sl-change', updateTableStyling);
+        }
+    });
+}
+
+// Update table row styling based on which drivetime layers are active
+function updateTableStyling() {
+    const drivetimeCheckboxes = {
+        '10': document.getElementById('drivetime-10'),
+        '20': document.getElementById('drivetime-20'),
+        '30': document.getElementById('drivetime-30')
+    };
+    
+    // Update styling for each row
+    Object.keys(drivetimeCheckboxes).forEach(minutes => {
+        const checkbox = drivetimeCheckboxes[minutes];
+        const row = document.getElementById(`stats-row-${minutes}`);
+        
+        if (checkbox && row) {
+            if (checkbox.checked) {
+                // Make row bold when drivetime layer is active
+                row.style.fontWeight = 'bold';
+                row.style.backgroundColor = 'rgba(0, 100, 200, 0.1)'; // Light blue background
+            } else {
+                // Return to normal styling when drivetime layer is inactive
+                row.style.fontWeight = 'normal';
+                row.style.backgroundColor = 'transparent';
+            }
+        }
+    });
 }
 
 // Helper: Convert dropdown value (with hyphens) to CSV value (with spaces)
@@ -131,13 +173,16 @@ function handleDepartmentChange() {
                 <tr>
                     <th>Within</th>
                     <th>Visits</th>
-                    <th>Percentage</th>
+                    <th>% of Total</th>
                 </tr>
-                <tr><td>10 min</td><td>${v10}</td><td>${p10}</td></tr>
-                <tr><td>20 min</td><td>${v20}</td><td>${p20}</td></tr>
-                <tr><td>30 min</td><td>${v30}</td><td>${p30}</td></tr>
+                <tr id="stats-row-10"><td>10 min</td><td>${v10}</td><td>${p10}</td></tr>
+                <tr id="stats-row-20"><td>20 min</td><td>${v20}</td><td>${p20}</td></tr>
+                <tr id="stats-row-30"><td>30 min</td><td>${v30}</td><td>${p30}</td></tr>
                 <tr><td><i>Total</i></td><td><i>${vTotal}</i></td><td><i>${pTotal}</i></td></tr>
             `;
+            
+            // Update styling based on current drivetime checkbox states
+            updateTableStyling();
         }
     } else {
         // Optionally show not found message

@@ -3,7 +3,9 @@ export class PossibleSitesManager {
     constructor() {
         this.toggle = null;
         this.mapManager = null;
-        this.siteMarkers = [];
+        this.comparisonMapManager = null;
+        this.siteMarkers = []; // Markers on main map
+        this.comparisonSiteMarkers = []; // Markers on comparison map
         this.isActive = false;
         
         // Site coordinates (lat, lng format)
@@ -47,45 +49,70 @@ export class PossibleSitesManager {
         this.mapManager = mapManager;
     }
 
-    // Show site markers on the main map
+    // Set reference to ComparisonMapManager for coordination
+    setComparisonMapManager(comparisonMapManager) {
+        this.comparisonMapManager = comparisonMapManager;
+    }
+
+    // Show site markers on both main map and comparison map (if active)
     showSiteMarkers() {
         if (!this.mapManager || !this.mapManager.getMap()) {
             console.warn('Map manager not available');
             return;
         }
 
-        const map = this.mapManager.getMap();
-
         // Remove existing markers first
         this.hideSiteMarkers();
 
-        // Add markers for each site location
+        // Add markers to main map
+        const mainMap = this.mapManager.getMap();
         this.siteLocations.forEach((coords, index) => {
-            const marker = this.createSiteMarker(coords, index);
-            this.siteMarkers.push(marker);
+            const marker = this.createSiteMarker(mainMap, coords, index);
+            if (marker) {
+                this.siteMarkers.push(marker);
+            }
         });
 
+        // Add markers to comparison map if it's active
+        if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
+            const comparisonMap = this.comparisonMapManager.getAfterMap();
+            if (comparisonMap) {
+                this.siteLocations.forEach((coords, index) => {
+                    const marker = this.createSiteMarker(comparisonMap, coords, index);
+                    if (marker) {
+                        this.comparisonSiteMarkers.push(marker);
+                    }
+                });
+            }
+        }
+
         this.isActive = true;
-        console.log(`Added ${this.siteMarkers.length} possible site markers`);
+        console.log(`Added ${this.siteMarkers.length} markers to main map${this.comparisonSiteMarkers.length > 0 ? ` and ${this.comparisonSiteMarkers.length} markers to comparison map` : ''}`);
     }
 
-    // Hide/remove all site markers
+    // Hide/remove all site markers from both maps
     hideSiteMarkers() {
+        // Remove markers from main map
         this.siteMarkers.forEach(marker => {
             marker.remove();
         });
         this.siteMarkers = [];
+
+        // Remove markers from comparison map
+        this.comparisonSiteMarkers.forEach(marker => {
+            marker.remove();
+        });
+        this.comparisonSiteMarkers = [];
+
         this.isActive = false;
-        console.log('Removed all possible site markers');
+        console.log('Removed all possible site markers from both maps');
     }
 
-    // Create a red marker for a site location
-    createSiteMarker(coords, index) {
-        if (!this.mapManager || !this.mapManager.getMap()) {
+    // Create a site marker for a specific map and location
+    createSiteMarker(map, coords, index) {
+        if (!map) {
             return null;
         }
-
-        const map = this.mapManager.getMap();
 
         // Create custom red marker element
         const el = document.createElement('div');
@@ -125,7 +152,7 @@ export class PossibleSitesManager {
 
     // Get current markers state
     hasActiveMarkers() {
-        return this.isActive && this.siteMarkers.length > 0;
+        return this.isActive && (this.siteMarkers.length > 0 || this.comparisonSiteMarkers.length > 0);
     }
 
     // Programmatically set toggle state
@@ -137,5 +164,21 @@ export class PossibleSitesManager {
                 detail: { checked: checked }
             }));
         }
+    }
+
+    // Sync markers when comparison mode is enabled
+    syncWithComparisonMode() {
+        if (this.isActive && this.toggle && this.toggle.checked) {
+            // If markers are supposed to be shown, refresh them to include comparison map
+            this.showSiteMarkers();
+        }
+    }
+
+    // Remove markers from comparison map when comparison mode is disabled
+    clearComparisonMarkers() {
+        this.comparisonSiteMarkers.forEach(marker => {
+            marker.remove();
+        });
+        this.comparisonSiteMarkers = [];
     }
 }

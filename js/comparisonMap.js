@@ -92,6 +92,11 @@ export class ComparisonMapManager {
     this.isochroneManager = isochroneManager;
   }
 
+  // Set reference to PossibleSitesManager for coordination
+  setPossibleSitesManager(possibleSitesManager) {
+    this.possibleSitesManager = possibleSitesManager;
+  }
+
   // Enable comparison mode - create second map and activate split view
   async enableComparisonMode() {
     if (this.isComparisonActive || !this.mapManager) return;
@@ -136,6 +141,11 @@ export class ComparisonMapManager {
       // Sync marker with main map's current department selection (after isochrone sync)
       setTimeout(() => {
         this.syncMarkerWithMainMap();
+        
+        // Sync possible sites markers if they are currently active
+        if (this.possibleSitesManager) {
+          this.possibleSitesManager.syncWithComparisonMode();
+        }
       }, 350); // Give the isochrone sync time to complete first
 
       this.isComparisonActive = true;
@@ -181,6 +191,11 @@ export class ComparisonMapManager {
       // Clean up any active layers
       this.removeComparisonChoropleth();
       this.removeDotProjects();
+
+      // Remove possible sites markers from comparison map
+      if (this.possibleSitesManager) {
+        this.possibleSitesManager.clearComparisonMarkers();
+      }
 
       this.isComparisonActive = false;
       console.log('Comparison mode disabled');

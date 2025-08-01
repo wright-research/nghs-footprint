@@ -71,10 +71,14 @@ class NGHSFootprintApp {
             this.uiControlsManager.setComparisonMapManager(this.comparisonMapManager);
             this.comparisonMapManager.setMapManager(this.mapManager);
             this.possibleSitesManager.setMapManager(this.mapManager);
+            this.possibleSitesManager.setComparisonMapManager(this.comparisonMapManager);
             
             // Connect isochrone manager with comparison map manager for sync
             this.isochroneManager.setComparisonMapManager(this.comparisonMapManager);
             this.comparisonMapManager.setIsochroneManager(this.isochroneManager);
+            
+            // Connect possible sites manager with comparison map manager for sync
+            this.comparisonMapManager.setPossibleSitesManager(this.possibleSitesManager);
 
             this.isInitialized = true;
             // console.log('NGHS Footprint App initialized successfully!');
