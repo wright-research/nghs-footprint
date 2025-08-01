@@ -70,7 +70,7 @@ sl-button.openDrawerBtn::part(base) {
     color: white;
     border-radius: 10px;
     border: 1px solid #efefef;
-    width: 148px;
+    width: 165px;
     transition: var(--sl-transition-medium) background-color ease,
         var(--sl-transition-medium) border ease,
         var(--sl-transition-medium) color ease;
@@ -320,13 +320,13 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
     left: 15px;
     z-index: 1;
     text-align: center;
-    width: 125px;
+    width: 142px;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .legend h3 {
     margin: 0 0 10px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
 }
 
@@ -375,15 +375,9 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
     display: inline-block;
 }
 
-#comparison-legend.dark-mode {
-    background-color: #efefef;
-    color: #343a40;
-    border: 1px solid #efefef;
-}
-
 #comparison-legend-title {
     margin: 0 0 10px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
     text-align: center;
 }

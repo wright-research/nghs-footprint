@@ -65,7 +65,7 @@ export class MapManager {
             },
             center: center,
             minZoom: 5, // farthest zoom out
-            zoom: 9,
+            zoom: 9.3,
             maxZoom: 16, // farthest zoom in
             crossOrigin: "anonymous",
             maxBounds: bounds,
@@ -263,7 +263,7 @@ export class MapManager {
             zoom: 11
         },
         'NGPG-Orthopedic-Surgery-Toccoa': {
-            center: [34.06865318, -83.90461233], // Toccoa, GA
+            center: [34.57996710408609, -83.3182789268724], // Toccoa, GA
             zoom: 11
         },
         'NGPG-Orthopedic-Trauma-Recon-Surgery': {
@@ -275,7 +275,7 @@ export class MapManager {
             zoom: 11
         },
         'NGPG-Surgical-Associates-Toccoa': {
-            center: [34.06865318, -83.90461233], // Toccoa, GA
+            center: [34.57996710408609, -83.3182789268724], // Toccoa, GA
             zoom: 11
         },
         'NGPG-West-Jackson': {
@@ -423,9 +423,9 @@ export class MapManager {
                     // italicize the text
                 },
                 paint: {
-                    'text-color': '#444444',
+                    'text-color': '#252525',
                     'text-halo-color': '#ffffff',
-                    'text-halo-width': 1
+                    'text-halo-width': 2
                 }
             });
 
@@ -901,7 +901,7 @@ export class MapManager {
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-                font-size: 12px;
+                font-size: 15px;
                 color: #fff;
             ">
                 <div style="display: flex; align-items: flex-start;">
@@ -955,7 +955,7 @@ export class MapManager {
             'NGPG-Hamilton-Mill': 'NGPG Hamilton Mill',
             'NGPG-Internal-Medicine-Demorest': 'NGPG Internal Medicine in Demorest',
             'NGPG-Oakwood': 'NGPG Oakwood',
-            'NGPG-Orthopedic-Surgery-Sports-Medicine': 'NGPG Ortho. Surgery & Sports Med. in Demorest',
+            'NGPG-Orthopedic-Surgery-Sports-Medicine': 'NGPG Ortho. Surgery & Sports Medicine in Demorest',
             'NGPG-Orthopedic-Surgery-Dahlonega': 'NGPG Ortho. Surgery in Dahlonega',
             'NGPG-Orthopedic-Surgery-Hamilton-Mill': 'NGPG Ortho. Surgery in Hamilton Mill',
             'NGPG-Orthopedic-Surgery-Toccoa': 'NGPG Ortho. Surgery in Toccoa',

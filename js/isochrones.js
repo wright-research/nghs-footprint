@@ -23,6 +23,7 @@ export class IsochroneManager {
             'Medical-Plaza-1-Flowery-Branch': 'medPlaza1_fb_iso_clean.geojson',
             'Medical-Park-1-Gainesville': 'medPark1_gainesville_iso_clean.geojson',
             'Medical-Park-2-Gainesville': 'medPark2_gainesville_iso_clean.geojson',
+            'Medical-Plaza-Jefferson': 'uc_jefferson_iso_clean.geojson',
             'Medical-Plaza-1-Thompson-Bridge': 'medicalPlaza_ThomBrid_iso_clean.geojson',
             'NGHS-Cleveland-MOB': 'nghs_cleveland_iso_clean.geojson',
             'NGMC-Barrow-MOB': 'ngmc_Barrow_MOB_iso_clean.geojson',

@@ -305,17 +305,26 @@ export class ComparisonMapManager {
     
     // Handle different comparison layer types
     if (layerValue === 'aerial' || layerValue === 'streets') {
-      // For blank layers, just remove any existing choropleth and hide legend
+      // For blank layers, change the base map style and hide legend
       this.removeComparisonChoropleth();
       this.removeDotProjects();
       this.hideComparisonLegend();
+      this.updateBaseMapStyle(layerValue);
       return;
     }
     
     // Handle demographic choropleth layers
     if (this.comparisonDataMapping[layerValue]) {
       this.removeDotProjects();
-      this.updateDemographicChoropleth(layerValue);
+      
+      // Restore default style if currently using aerial/streets
+      if (this.needsStyleRestore()) {
+        this.restoreDefaultStyle(() => {
+          this.updateDemographicChoropleth(layerValue);
+        });
+      } else {
+        this.updateDemographicChoropleth(layerValue);
+      }
       return;
     }
 
@@ -323,11 +332,156 @@ export class ComparisonMapManager {
     if (layerValue === 'dot-under-construction' || layerValue === 'dot-pre-construction') {
       this.removeComparisonChoropleth();
       this.hideComparisonLegend();
-      this.updateDotProjectsLayer(layerValue);
+      
+      // Restore default style if currently using aerial/streets
+      if (this.needsStyleRestore()) {
+        this.restoreDefaultStyle(() => {
+          this.updateDotProjectsLayer(layerValue);
+        });
+      } else {
+        this.updateDotProjectsLayer(layerValue);
+      }
       return;
     }
     
     console.warn(`Comparison layer not yet implemented: ${layerValue}`);
+  }
+
+  // Update base map style for blank layers (Aerial/Streets)
+  updateBaseMapStyle(layerValue) {
+    if (!this.afterMap) return;
+
+    console.log(`Updating base map style to: ${layerValue}`);
+
+    // Store current map state to preserve position
+    const currentCenter = this.afterMap.getCenter();
+    const currentZoom = this.afterMap.getZoom();
+
+    // Define style based on layer value
+    let newStyle;
+    if (layerValue === 'aerial') {
+      // ArcGIS aerial imagery style
+      newStyle = {
+        version: 8,
+        sources: {
+          aerial: {
+            type: "raster",
+            tiles: [
+              "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            ],
+            tileSize: 256,
+            attribution: "Imagery © Esri",
+          },
+        },
+        glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf", // Required for text labels
+        layers: [
+          {
+            id: "esri-tiles",
+            type: "raster",
+            source: "aerial",
+          },
+        ],
+      };
+    } else if (layerValue === 'streets') {
+      // Mapbox streets style
+      newStyle = "mapbox://styles/mapbox/streets-v11";
+    }
+
+    // Set the new style
+    this.afterMap.setStyle(newStyle);
+
+    // Wait for style to load, then restore county layers and position
+    this.afterMap.once('styledata', () => {
+      // Restore the map position
+      this.afterMap.setCenter(currentCenter);
+      this.afterMap.setZoom(currentZoom);
+
+      // Re-add county boundaries and labels
+      this.loadCountyLayersAfterMap().then(() => {
+        // Apply special styling for aerial layer
+        if (layerValue === 'aerial') {
+          this.applyAerialCountyStyling();
+        }
+      });
+      
+      console.log(`Base map style updated to: ${layerValue}`);
+    });
+  }
+
+  // Restore default CARTO style for data layers
+  restoreDefaultStyle(callback) {
+    if (!this.afterMap) return;
+
+    console.log('Restoring default CARTO style...');
+
+    // Store current map state to preserve position
+    const currentCenter = this.afterMap.getCenter();
+    const currentZoom = this.afterMap.getZoom();
+
+    // Default CARTO light style (matching createAfterMap)
+    const defaultStyle = {
+      version: 8,
+      sources: {
+        carto: {
+          type: "raster",
+          tiles: [
+            "https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png",
+          ],
+          tileSize: 256,
+          attribution:
+            '&copy; <a href="https://carto.com/">CARTO</a> | <a href="https://www.loopnet.com/commercial-real-estate-brokers/profile/george-hokayem/w7x34gkb", target="_blank">SVN Hokayem Co.</a>',
+        },
+      },
+      glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+      layers: [
+        {
+          id: "carto-layer",
+          type: "raster",
+          source: "carto",
+          minzoom: 0,
+          maxzoom: 20,
+        },
+      ],
+    };
+
+    // Set the default style
+    this.afterMap.setStyle(defaultStyle);
+
+    // Wait for style to load, then restore position and county layers
+    this.afterMap.once('styledata', () => {
+      // Restore the map position
+      this.afterMap.setCenter(currentCenter);
+      this.afterMap.setZoom(currentZoom);
+
+      // Re-add county boundaries and labels
+      this.loadCountyLayersAfterMap().then(() => {
+        console.log('Default CARTO style restored');
+        if (callback) callback();
+      });
+    });
+  }
+
+  // Check if current style is a blank style (aerial or streets)
+  needsStyleRestore() {
+    if (!this.afterMap) return false;
+    
+    // Check if current style has CARTO source (default style)
+    const style = this.afterMap.getStyle();
+    return !style.sources.carto;
+  }
+
+  // Apply special white county boundary styling for aerial layer
+  applyAerialCountyStyling() {
+    if (!this.afterMap) return;
+
+    // Update county boundary styling to be more visible on aerial imagery
+    if (this.afterMap.getLayer('county-boundaries')) {
+      this.afterMap.setPaintProperty('county-boundaries', 'line-color', '#ffffff');
+      this.afterMap.setPaintProperty('county-boundaries', 'line-width', 2);
+      this.afterMap.setPaintProperty('county-boundaries', 'line-opacity', 0.9);
+      
+      console.log('Applied white county boundary styling for aerial view');
+    }
   }
 
   // Get the after-map instance
@@ -429,9 +583,9 @@ export class ComparisonMapManager {
           'text-transform': 'uppercase',
         },
         paint: {
-          'text-color': '#444444',
+          'text-color': '#252525',
           'text-halo-color': '#ffffff',
-          'text-halo-width': 1
+          'text-halo-width': 2
         }
       });
 
@@ -1366,7 +1520,7 @@ export class ComparisonMapManager {
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-                font-size: 12px;
+                font-size: 15px;
                 color: #fff;
                 text-align: left;
             ">
@@ -1398,7 +1552,7 @@ export class ComparisonMapManager {
   formatLayerName(layerValue) {
     const layerNames = {
       'current-population': 'Current Population',
-      'projected-population-change': 'Projected Population Change',
+      'projected-population-change': 'Projected 5-Yr.<br> Population Change',
       'home-sales': 'Home Sales (since 2024)',
       'median-home-price': 'Median Home Sale<br>Price / SF (since 2024)',
       'median-income': 'Median Income'
