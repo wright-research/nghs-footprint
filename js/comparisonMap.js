@@ -771,7 +771,7 @@ export class ComparisonMapManager {
       // Load both geometry and demographic data in parallel
       const [geoResponse, dataResponse] = await Promise.all([
         fetch('Data/Other/hexagon_geos.geojson'),
-        fetch('Data/Hex_demogs/hex_demogs2.csv')
+        fetch('Data/Hex_demogs/hex_demogs.csv')
       ]);
 
       if (!geoResponse.ok || !dataResponse.ok) {

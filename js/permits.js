@@ -31,7 +31,20 @@ export function loadPermitData() {
             allMonths = Array.from(new Set(allData.map(row => row.year_month))).sort();
             setupJurisdictionListener();
             setupPermitTypeListener();
-            renderPermitChart();
+            
+            // Wait for Shoelace component to be ready before rendering chart
+            const select = document.getElementById('jurisdictionSelect');
+            if (select && select.updateComplete) {
+                // Wait for Shoelace component to fully initialize
+                select.updateComplete.then(() => {
+                    renderPermitChart();
+                });
+            } else {
+                // Fallback: small delay to ensure component is ready
+                setTimeout(() => {
+                    renderPermitChart();
+                }, 100);
+            }
         },
         error: (err) => {
             console.error('Error loading permit CSV:', err);
@@ -60,7 +73,17 @@ function setupPermitTypeListener() {
 function getSelectedJurisdictions() {
     const select = document.getElementById('jurisdictionSelect');
     if (!select) return [];
-    return Array.from(select.value || []);
+    
+    const value = select.value;
+    
+    // Handle both string (single value from HTML attribute) and array (multiple selections)
+    if (typeof value === 'string') {
+        return value ? [value] : [];
+    } else if (Array.isArray(value)) {
+        return value;
+    } else {
+        return [];
+    }
 }
 
 // Map radio value to CSV column
