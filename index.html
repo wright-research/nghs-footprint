@@ -131,14 +131,14 @@
 
         
 
-        <!-- drivetime polygon checkboxes -->
+        <!-- drivetime polygon toggle switches -->
         <div class="drivetime-container">
             <h3 class="drivetime-header">Drivetime From NGPG - Jefferson (Minutes)</h3>
 
-            <div class="drivetime-checkboxes">
-                <sl-checkbox id="drivetime-10" value="10">10</sl-checkbox>
-                <sl-checkbox id="drivetime-20" value="20">20</sl-checkbox>
-                <sl-checkbox id="drivetime-30" value="30">30</sl-checkbox>
+            <div class="drivetime-toggles" style="display: flex; gap: 40px;">
+                <sl-switch id="drivetime-10" value="10">10</sl-switch>
+                <sl-switch id="drivetime-20" value="20">20</sl-switch>
+                <sl-switch id="drivetime-30" value="30">30</sl-switch>
             </div>
         </div>
 
@@ -170,7 +170,7 @@
         <!-- Dropdown that is greyed out by default -->
         <div id="comparisonDropdownContainer" style="display: block; margin-top: 20px;">
             <sl-select id="comparisonSelect" label="Comparison layer:" placeholder="Select layer"
-                value="current-population" disabled>
+                value="aerial" disabled>
                 <sl-option value="aerial">Blank - Aerial</sl-option>
                 <sl-option value="streets">Blank - Streets</sl-option>
                 <sl-option value="current-population">Current Population</sl-option>

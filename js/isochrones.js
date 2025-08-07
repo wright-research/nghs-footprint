@@ -96,13 +96,8 @@ export class IsochroneManager {
             const geojsonData = await response.json();
             this.currentIsochroneData = geojsonData;
 
-            // Add the isochrone layers to the map
-            this.addIsochroneLayers(geojsonData);
-            
-            // Also add to comparison map if it's active
-            if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
-                await this.comparisonMapManager.loadIsochroneAfterMap(departmentValue, geojsonData);
-            }
+            // Use the new unified approach to add layers to ALL active maps
+            this.showIsochroneLayers(geojsonData);
 
             console.log(`Successfully loaded isochrone data for ${departmentValue}`);
             return true;
@@ -113,16 +108,95 @@ export class IsochroneManager {
         }
     }
 
-    // Add isochrone data source to the map (but don't show layers yet)
-    addIsochroneLayers(geojsonData) {
-        if (!this.mapManager || !this.mapManager.getMap()) {
+    // ========== OBSOLETE METHOD REMOVED ==========
+    // addIsochroneLayers() has been replaced by the unified showIsochroneLayers() approach
+
+    // Show/hide specific isochrone layer on ALL active maps
+    toggleIsochroneLayer(minutes, isVisible) {
+        // Apply to main map
+        if (this.mapManager && this.mapManager.getMap()) {
+            this.setLayerVisibility(this.mapManager.getMap(), minutes, isVisible);
+        }
+
+        // Apply to comparison map if it's active
+        if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
+            const comparisonMap = this.comparisonMapManager.getAfterMap();
+            if (comparisonMap) {
+                this.setLayerVisibility(comparisonMap, minutes, isVisible);
+            }
+        }
+    }
+
+    // Clear all isochrone layers from ALL active maps
+    clearIsochrones() {
+        // Clear from main map
+        if (this.mapManager && this.mapManager.getMap()) {
+            this.clearIsochronesFromMap(this.mapManager.getMap());
+        }
+
+        // Clear from comparison map if it exists (active or not, to be safe)
+        if (this.comparisonMapManager && this.comparisonMapManager.getAfterMap()) {
+            this.clearIsochronesFromMap(this.comparisonMapManager.getAfterMap());
+        }
+
+        this.currentIsochroneData = null;
+    }
+
+    // Check if isochrone data is currently loaded
+    hasIsochroneData() {
+        return this.currentIsochroneData !== null;
+    }
+
+    // Get current isochrone data
+    getCurrentIsochroneData() {
+        return this.currentIsochroneData;
+    }
+
+    // Get available departments (keys from the mapping)
+    getAvailableDepartments() {
+        return Object.keys(this.isochroneFileMapping);
+    }
+
+    // Check if a department has isochrone data available
+    hasIsochroneForDepartment(departmentValue) {
+        return this.isochroneFileMapping.hasOwnProperty(departmentValue);
+    }
+
+    // ========== NEW UNIFIED METHODS (Phase 1) ==========
+    
+    // Master method to show isochrone layers on both main and comparison maps
+    // This follows the same pattern as PossibleSitesManager.showSiteMarkers()
+    showIsochroneLayers(geojsonData) {
+        if (!geojsonData) {
+            console.warn('No geojson data provided to showIsochroneLayers');
             return;
         }
 
-        const map = this.mapManager.getMap();
-
-        // Remove existing layers if they exist
+        // Clear existing layers from ALL maps first (like hideSiteMarkers)
         this.clearIsochrones();
+
+        // Add layers to main map
+        if (this.mapManager && this.mapManager.getMap()) {
+            this.addIsochroneLayersToMap(this.mapManager.getMap(), geojsonData);
+        }
+
+        // Add layers to comparison map if it's active
+        if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
+            const comparisonMap = this.comparisonMapManager.getAfterMap();
+            if (comparisonMap) {
+                this.addIsochroneLayersToMap(comparisonMap, geojsonData);
+            }
+        }
+
+        console.log('Isochrone layers added to all active maps');
+    }
+
+    // Helper method to add isochrone layers to a specific map
+    // Extracted from the existing addIsochroneLayers method
+    addIsochroneLayersToMap(map, geojsonData) {
+        if (!map || !geojsonData) {
+            return;
+        }
 
         // Add source for isochrone data
         map.addSource('isochrone-source', {
@@ -130,7 +204,7 @@ export class IsochroneManager {
             data: geojsonData
         });
 
-        // Define border colors for each time interval (border-only, no fill)
+        // Define border colors for each time interval (matching existing logic)
         const timeBorders = {
             '10-min': '#0064c8', // Dark blue for 10-minute (closest)
             '20-min': '#0096ff', // Medium blue for 20-minute  
@@ -161,32 +235,23 @@ export class IsochroneManager {
         });
     }
 
-    // Show/hide specific isochrone layer
-    toggleIsochroneLayer(minutes, isVisible) {
-        if (!this.mapManager || !this.mapManager.getMap()) {
+    // Helper method to set layer visibility on a specific map
+    setLayerVisibility(map, minutes, isVisible) {
+        if (!map) {
             return;
         }
 
-        const map = this.mapManager.getMap();
         const layerId = `isochrone-${minutes}-min-border`;
-
         if (map.getLayer(layerId)) {
             map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
         }
-
-        // Also toggle on comparison map if it's active
-        if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
-            this.comparisonMapManager.toggleIsochroneLayerAfterMap(minutes, isVisible);
-        }
     }
 
-    // Clear all isochrone layers
-    clearIsochrones() {
-        if (!this.mapManager || !this.mapManager.getMap()) {
+    // Helper method to clear isochrones from a specific map
+    clearIsochronesFromMap(map) {
+        if (!map) {
             return;
         }
-
-        const map = this.mapManager.getMap();
 
         // Define all possible layer IDs
         const timeIntervals = ['10-min', '20-min', '30-min'];
@@ -203,32 +268,45 @@ export class IsochroneManager {
         if (map.getSource('isochrone-source')) {
             map.removeSource('isochrone-source');
         }
+    }
 
-        // Also clear from comparison map if it's active
-        if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
-            this.comparisonMapManager.clearIsochronesAfterMap();
+    // Sync method to be called when comparison mode is enabled
+    // This is the direct equivalent of PossibleSitesManager.syncWithComparisonMode()
+    syncWithComparisonMode() {
+        if (this.currentIsochroneData) {
+            console.log('Syncing isochrones with comparison mode...');
+            // If isochrones are loaded, refresh them to include comparison map
+            this.showIsochroneLayers(this.currentIsochroneData);
+            
+            // Restore current visibility states from the switches
+            this.syncCurrentVisibilityStates();
         }
-
-        this.currentIsochroneData = null;
     }
 
-    // Check if isochrone data is currently loaded
-    hasIsochroneData() {
-        return this.currentIsochroneData !== null;
-    }
+    // Helper method to sync current switch states to both maps
+    syncCurrentVisibilityStates() {
+        const drivetimeSwitches = {
+            '10': document.getElementById('drivetime-10'),
+            '20': document.getElementById('drivetime-20'),
+            '30': document.getElementById('drivetime-30')
+        };
 
-    // Get current isochrone data
-    getCurrentIsochroneData() {
-        return this.currentIsochroneData;
-    }
-
-    // Get available departments (keys from the mapping)
-    getAvailableDepartments() {
-        return Object.keys(this.isochroneFileMapping);
-    }
-
-    // Check if a department has isochrone data available
-    hasIsochroneForDepartment(departmentValue) {
-        return this.isochroneFileMapping.hasOwnProperty(departmentValue);
+        // Check each switch and apply its state to both maps
+        Object.keys(drivetimeSwitches).forEach(minutes => {
+            const switch_ = drivetimeSwitches[minutes];
+            if (switch_ && switch_.checked) {
+                // Apply visibility to main map
+                if (this.mapManager && this.mapManager.getMap()) {
+                    this.setLayerVisibility(this.mapManager.getMap(), minutes, true);
+                }
+                // Apply visibility to comparison map if active
+                if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
+                    const comparisonMap = this.comparisonMapManager.getAfterMap();
+                    if (comparisonMap) {
+                        this.setLayerVisibility(comparisonMap, minutes, true);
+                    }
+                }
+            }
+        });
     }
 } 

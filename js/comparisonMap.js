@@ -127,8 +127,10 @@ export class ComparisonMapManager {
         this.initializeCompare();
       }, 150);
 
-      // Sync any existing isochrones from the main map
-      this.syncExistingIsochrones();
+      // Sync any existing isochrones from the main map using the new unified approach
+      if (this.isochroneManager) {
+        this.isochroneManager.syncWithComparisonMode();
+      }
 
       // Load the default comparison layer
       setTimeout(() => {
@@ -639,129 +641,13 @@ export class ComparisonMapManager {
     });
   }
 
-  // Load isochrone data for after-map (sync with main map)
-  async loadIsochroneAfterMap(departmentValue, isochroneData) {
-    if (!this.afterMap || !isochroneData) return;
-
-    try {
-      // Clear existing isochrones first
-      this.clearIsochronesAfterMap();
-
-      // Skip if "All" is selected
-      if (departmentValue === 'All') {
-        return;
-      }
-
-      // Add source for isochrone data
-      this.afterMap.addSource('isochrone-source', {
-        type: 'geojson',
-        data: isochroneData
-      });
-
-      // Define border colors for each time interval (matching main map)
-      const timeBorders = {
-        '10-min': '#0064c8', // Dark blue for 10-minute (closest)
-        '20-min': '#0096ff', // Medium blue for 20-minute  
-        '30-min': '#64c8ff'  // Light blue for 30-minute (farthest)
-      };
-
-      // Add border layers for each time interval (but hidden initially)
-      const timeIntervals = ['30-min', '20-min', '10-min'];
-
-      timeIntervals.forEach((timeInterval, index) => {
-        const layerId = `isochrone-${timeInterval}-border`;
-
-        // Add border layer (initially hidden)
-        this.afterMap.addLayer({
-          id: layerId,
-          type: 'line',
-          source: 'isochrone-source',
-          filter: ['==', 'BUFFER_RADIUS', timeInterval],
-          paint: {
-            'line-color': timeBorders[timeInterval],
-            'line-width': 3,
-            'line-opacity': 1
-          },
-          layout: {
-            'visibility': 'none' // Initially hidden
-          }
-        });
-      });
-
-      // Ensure county layers stay on top
-      this.ensureCountyLayersOnTopAfterMap();
-
-      console.log(`Isochrone layers added to comparison map for ${departmentValue}`);
-    } catch (error) {
-      console.error('Error loading isochrone for comparison map:', error);
-    }
-  }
-
-  // Show/hide specific isochrone layer on after-map
-  toggleIsochroneLayerAfterMap(minutes, isVisible) {
-    if (!this.afterMap) return;
-
-    const layerId = `isochrone-${minutes}-min-border`;
-
-    if (this.afterMap.getLayer(layerId)) {
-      this.afterMap.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
-    }
-  }
-
-  // Clear all isochrone layers from after-map
-  clearIsochronesAfterMap() {
-    if (!this.afterMap) return;
-
-    // Define all possible layer IDs
-    const timeIntervals = ['10-min', '20-min', '30-min'];
-
-    // Remove all isochrone layers
-    timeIntervals.forEach(timeInterval => {
-      const layerId = `isochrone-${timeInterval}-border`;
-      if (this.afterMap.getLayer(layerId)) {
-        this.afterMap.removeLayer(layerId);
-      }
-    });
-
-    // Remove the source
-    if (this.afterMap.getSource('isochrone-source')) {
-      this.afterMap.removeSource('isochrone-source');
-    }
-  }
-
-  // Sync existing isochrones from main map when comparison mode is enabled
-  syncExistingIsochrones() {
-    if (!this.isochroneManager || !this.afterMap) return;
-
-    // Get current isochrone data if it exists
-    const currentIsochroneData = this.isochroneManager.getCurrentIsochroneData();
-    if (!currentIsochroneData) return;
-
-    // Get the current department selection
-    const departmentSelect = document.getElementById('departmentSelect');
-    if (!departmentSelect) return;
-
-    const currentDepartment = departmentSelect.value;
-    if (currentDepartment === 'All') return;
-
-    // Load the isochrone data on the comparison map
-    this.loadIsochroneAfterMap(currentDepartment, currentIsochroneData).then(() => {
-      // Sync the visibility of existing checkboxes
-      const drivetimeCheckboxes = {
-        '10': document.getElementById('drivetime-10'),
-        '20': document.getElementById('drivetime-20'),
-        '30': document.getElementById('drivetime-30')
-      };
-
-      // Check each checkbox and sync visibility
-      Object.keys(drivetimeCheckboxes).forEach(minutes => {
-        const checkbox = drivetimeCheckboxes[minutes];
-        if (checkbox && checkbox.checked) {
-          this.toggleIsochroneLayerAfterMap(minutes, true);
-        }
-      });
-    });
-  }
+  // ========== OBSOLETE ISOCHRONE METHODS REMOVED ==========
+  // The following methods have been removed as isochrone management is now
+  // handled entirely by IsochroneManager using the unified approach:
+  // - loadIsochroneAfterMap()
+  // - toggleIsochroneLayerAfterMap()  
+  // - clearIsochronesAfterMap()
+  // - syncExistingIsochrones()
 
   // Load demographic data for comparison layers
   async loadDemographicData() {

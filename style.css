@@ -274,7 +274,7 @@ sl-button.openDrawerBtn.dark-mode::part(base):hover {
     margin: 0 0 15px 0;
 }
 
-.drivetime-checkboxes {
+.drivetime-toggles {
     display: flex;
     justify-content: center;
     gap: 9px;

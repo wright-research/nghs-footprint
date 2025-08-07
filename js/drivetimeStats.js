@@ -31,37 +31,37 @@ function setupDepartmentListener() {
     if (!select) return;
     select.addEventListener('sl-change', handleDepartmentChange);
     
-    // Also listen for drivetime checkbox changes
+    // Also listen for drivetime switch changes
     setupDrivetimeListeners();
 }
 
-// Listen for drivetime checkbox changes to update table styling
+// Listen for drivetime switch changes to update table styling
 function setupDrivetimeListeners() {
-    const drivetimeCheckboxes = ['drivetime-10', 'drivetime-20', 'drivetime-30'];
+    const drivetimeSwitches = ['drivetime-10', 'drivetime-20', 'drivetime-30'];
     
-    drivetimeCheckboxes.forEach(checkboxId => {
-        const checkbox = document.getElementById(checkboxId);
-        if (checkbox) {
-            checkbox.addEventListener('sl-change', updateTableStyling);
+    drivetimeSwitches.forEach(switchId => {
+        const switch_ = document.getElementById(switchId);
+        if (switch_) {
+            switch_.addEventListener('sl-change', updateTableStyling);
         }
     });
 }
 
 // Update table row styling based on which drivetime layers are active
 function updateTableStyling() {
-    const drivetimeCheckboxes = {
+    const drivetimeSwitches = {
         '10': document.getElementById('drivetime-10'),
         '20': document.getElementById('drivetime-20'),
         '30': document.getElementById('drivetime-30')
     };
-    
+
     // Update styling for each row
-    Object.keys(drivetimeCheckboxes).forEach(minutes => {
-        const checkbox = drivetimeCheckboxes[minutes];
+    Object.keys(drivetimeSwitches).forEach(minutes => {
+        const switch_ = drivetimeSwitches[minutes];
         const row = document.getElementById(`stats-row-${minutes}`);
         
-        if (checkbox && row) {
-            if (checkbox.checked) {
+        if (switch_ && row) {
+            if (switch_.checked) {
                 // Make row bold when drivetime layer is active
                 row.style.fontWeight = 'bold';
                 row.style.backgroundColor = 'rgba(0, 100, 200, 0.1)'; // Light blue background

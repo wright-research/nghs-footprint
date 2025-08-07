@@ -7,7 +7,7 @@ export class UIControlsManager {
         this.mapManager = mapManager;
         this.isochroneManager = null;
         this.comparisonMapManager = null;
-        this.drivetimeCheckboxes = {
+        this.drivetimeSwitches = {
             '10': null,
             '20': null,
             '30': null
@@ -21,22 +21,22 @@ export class UIControlsManager {
         this.drivetimeContainer = document.querySelector('.drivetime-container');
         this.drivetimeHeader = document.querySelector('.drivetime-header');
 
-        // Get drivetime checkboxes
-        this.drivetimeCheckboxes['10'] = document.getElementById('drivetime-10');
-        this.drivetimeCheckboxes['20'] = document.getElementById('drivetime-20');
-        this.drivetimeCheckboxes['30'] = document.getElementById('drivetime-30');
+        // Get drivetime switches
+        this.drivetimeSwitches['10'] = document.getElementById('drivetime-10');
+        this.drivetimeSwitches['20'] = document.getElementById('drivetime-20');
+        this.drivetimeSwitches['30'] = document.getElementById('drivetime-30');
 
         if (!this.departmentSelect || !this.drivetimeContainer || !this.drivetimeHeader) {
             console.error('Required UI elements not found');
             return false;
         }
 
-        // Check if all checkboxes were found
-        const missingCheckboxes = Object.keys(this.drivetimeCheckboxes).filter(
-            key => !this.drivetimeCheckboxes[key]
+        // Check if all switches were found
+        const missingSwitches = Object.keys(this.drivetimeSwitches).filter(
+            key => !this.drivetimeSwitches[key]
         );
-        if (missingCheckboxes.length > 0) {
-            console.error('Missing drivetime checkboxes:', missingCheckboxes);
+        if (missingSwitches.length > 0) {
+            console.error('Missing drivetime switches:', missingSwitches);
             return false;
         }
 
@@ -58,11 +58,11 @@ export class UIControlsManager {
             this.handleDepartmentChange();
         });
 
-        // Listen for changes on drivetime checkboxes
-        Object.keys(this.drivetimeCheckboxes).forEach(minutes => {
-            const checkbox = this.drivetimeCheckboxes[minutes];
-            checkbox.addEventListener('sl-change', (event) => {
-                this.handleDrivetimeCheckboxChange(minutes, event.target.checked);
+        // Listen for changes on drivetime switches
+        Object.keys(this.drivetimeSwitches).forEach(minutes => {
+            const switch_ = this.drivetimeSwitches[minutes];
+            switch_.addEventListener('sl-change', (event) => {
+                this.handleDrivetimeSwitchChange(minutes, event.target.checked);
             });
         });
     }
@@ -106,8 +106,8 @@ export class UIControlsManager {
             }
         }
 
-        // Clear and disable/enable checkboxes based on selection
-        this.updateCheckboxState(selectedValue);
+        // Clear and disable/enable switches based on selection
+        this.updateSwitchState(selectedValue);
 
         // Load isochrone data if isochroneManager is available
         if (this.isochroneManager) {
@@ -115,35 +115,35 @@ export class UIControlsManager {
         }
     }
 
-    // Handle drivetime checkbox changes
-    handleDrivetimeCheckboxChange(minutes, isChecked) {
+    // Handle drivetime switch changes
+    handleDrivetimeSwitchChange(minutes, isChecked) {
         if (this.isochroneManager) {
             this.isochroneManager.toggleIsochroneLayer(minutes, isChecked);
         }
     }
 
-    // Update checkbox state based on department selection
-    updateCheckboxState(selectedValue) {
+    // Update switch state based on department selection
+    updateSwitchState(selectedValue) {
         const isAllSelected = selectedValue === 'All';
 
-        // Clear all checkboxes and disable them if "All" is selected
-        Object.keys(this.drivetimeCheckboxes).forEach(minutes => {
-            const checkbox = this.drivetimeCheckboxes[minutes];
-            checkbox.checked = false;
-            checkbox.disabled = isAllSelected;
+        // Clear all switches and disable them if "All" is selected
+        Object.keys(this.drivetimeSwitches).forEach(minutes => {
+            const switch_ = this.drivetimeSwitches[minutes];
+            switch_.checked = false;
+            switch_.disabled = isAllSelected;
 
-            // Also hide the isochrone layer when clearing checkboxes
+            // Also hide the isochrone layer when clearing switches
             if (this.isochroneManager) {
                 this.isochroneManager.toggleIsochroneLayer(minutes, false);
             }
         });
     }
 
-    // Get the current state of all drivetime checkboxes
-    getDrivetimeCheckboxStates() {
+    // Get the current state of all drivetime switches
+    getDrivetimeSwitchStates() {
         const states = {};
-        Object.keys(this.drivetimeCheckboxes).forEach(minutes => {
-            states[minutes] = this.drivetimeCheckboxes[minutes].checked;
+        Object.keys(this.drivetimeSwitches).forEach(minutes => {
+            states[minutes] = this.drivetimeSwitches[minutes].checked;
         });
         return states;
     }
@@ -170,8 +170,8 @@ export class UIControlsManager {
             this.drivetimeHeader.textContent = `Drivetime From ${readableName} (Minutes)`;
         }
 
-        // Update checkbox state (UI only - no map updates)
-        this.updateCheckboxState(selectedValue);
+        // Update switch state (UI only - no map updates)
+        this.updateSwitchState(selectedValue);
     }
 
     // Convert dropdown values to readable department names
