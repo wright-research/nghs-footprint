@@ -29,12 +29,6 @@ header {
     border-bottom: 1px solid #efefef;
 }
 
-/* Dark mode header */
-header.dark-mode {
-    background-color: #efefef;
-    color: #343a40;
-    border-bottom: 1px solid #666;
-}
 
 .nghs-logo {
     position: absolute;
@@ -84,20 +78,11 @@ sl-button.openDrawerBtn::part(base):hover {
     border: 1px solid #343a40;
 }
 
-/* Dark mode styling */
-sl-button.openDrawerBtn.dark-mode::part(base) {
-    background-color: #efefef;
-    /* Light background in dark mode */
-    color: #343a40;
-    border: 1px solid #343a40;
-}
-
-/* Dark mode hover effect */
-sl-button.openDrawerBtn.dark-mode::part(base):hover {
-    background-color: #343a40;
-    /* Dark background on hover in dark mode */
-    color: white;
-    border: 1px solid #efefef;
+.auth-logout-button {
+    position: absolute;
+    bottom: 20px;
+    left: 18px;
+    z-index: 99;
 }
 
 #geocoder-container {

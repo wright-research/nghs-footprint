@@ -72,7 +72,7 @@
     </header>
 
     <!-- shoelace drawer for filters -->
-    <sl-drawer label="" placement="start" class="drawer-placement" hidden>
+    <sl-drawer label="" placement="start" class="drawer-placement" open>
 
         <!-- dropdown for map layers -->
         <div id="departmentDropdownContainer">
@@ -173,6 +173,7 @@
                 value="aerial" disabled>
                 <sl-option value="aerial">Blank - Aerial</sl-option>
                 <sl-option value="streets">Blank - Streets</sl-option>
+                <sl-option value="service-area">Service Areas</sl-option>
                 <sl-option value="current-population">Current Population</sl-option>
                 <sl-option value="projected-population-change">Projected Population Change</sl-option>
                 <sl-option value="home-sales">Home Sales (since 2024)</sl-option>
@@ -200,14 +201,15 @@
 
         <!-- close button -->
         <sl-button slot="footer" class="close-button" variant="primary">
-            Close
+            <sl-icon name="arrow-bar-left" style="margin-right: 5px;"></sl-icon>Close
         </sl-button>
     </sl-drawer>
 
     <!-- open map filter -->
     <sl-tooltip id="drawerTooltip" content="Open side panel for options and stats." hoist trigger="manual">
         <sl-button class="openDrawerBtn openDrawer" variant="plain">
-            <div style="font-size: 15px;">Options</div>
+            <span style="font-size: 15px;">Options</span>
+            <sl-icon slot="suffix" name="arrow-bar-right"></sl-icon>
         </sl-button>
     </sl-tooltip>
 

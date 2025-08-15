@@ -94,7 +94,7 @@ export class MapManager {
                 accessToken: mapboxgl.accessToken,
                 mapboxgl: mapboxgl,
                 placeholder: "Search for an address:",
-                bbox: geocoderBounds,
+                // bbox: geocoderBounds,
                 limit: 5,
             });
 

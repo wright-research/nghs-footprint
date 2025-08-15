@@ -193,6 +193,7 @@ export class ComparisonMapManager {
       // Clean up any active layers
       this.removeComparisonChoropleth();
       this.removeDotProjects();
+      this.removeServiceArea();
 
       // Remove possible sites markers from comparison map
       if (this.possibleSitesManager) {
@@ -266,6 +267,13 @@ export class ComparisonMapManager {
         this.afterMap.on('load', () => {
           console.log('After-map loaded successfully');
           
+          // Add scale control (persists across style changes)
+          const scale = new mapboxgl.ScaleControl({
+            maxWidth: 175,
+            unit: 'imperial',
+          });
+          this.afterMap.addControl(scale, 'bottom-right');
+
           // Load county layers for the after-map
           this.loadCountyLayersAfterMap();
           
@@ -325,6 +333,7 @@ export class ComparisonMapManager {
       // For blank layers, change the base map style and hide legend
       this.removeComparisonChoropleth();
       this.removeDotProjects();
+      this.removeServiceArea(); // This will restore county layers if they were hidden
       this.hideComparisonLegend();
       this.updateBaseMapStyle(layerValue);
       return;
@@ -333,6 +342,7 @@ export class ComparisonMapManager {
     // Handle demographic choropleth layers
     if (this.comparisonDataMapping[layerValue]) {
       this.removeDotProjects();
+      this.removeServiceArea(); // This will restore county layers if they were hidden
       
       // Restore default style if currently using aerial/streets
       if (this.needsStyleRestore()) {
@@ -348,6 +358,7 @@ export class ComparisonMapManager {
     // Handle DOT Projects layers
     if (layerValue === 'dot-under-construction' || layerValue === 'dot-pre-construction') {
       this.removeComparisonChoropleth();
+      this.removeServiceArea(); // This will restore county layers if they were hidden
       this.hideComparisonLegend();
       
       // Restore default style if currently using aerial/streets
@@ -357,6 +368,23 @@ export class ComparisonMapManager {
         });
       } else {
         this.updateDotProjectsLayer(layerValue);
+      }
+      return;
+    }
+
+    // Handle Service Area layer
+    if (layerValue === 'service-area') {
+      this.removeComparisonChoropleth();
+      this.removeDotProjects();
+      this.hideComparisonLegend();
+      
+      // Restore default style if currently using aerial/streets
+      if (this.needsStyleRestore()) {
+        this.restoreDefaultStyle(() => {
+          this.updateServiceAreaLayer();
+        });
+      } else {
+        this.updateServiceAreaLayer();
       }
       return;
     }
@@ -407,22 +435,49 @@ export class ComparisonMapManager {
     // Set the new style
     this.afterMap.setStyle(newStyle);
 
-    // Wait for style to load, then restore county layers and position
-    this.afterMap.once('styledata', () => {
-      // Restore the map position
-      this.afterMap.setCenter(currentCenter);
-      this.afterMap.setZoom(currentZoom);
+    // For Streets, wait for map to be idle; for others, keep existing behavior
+    if (layerValue === 'streets') {
+      this.afterMap.once('idle', () => {
+        // Restore the map position
+        this.afterMap.setCenter(currentCenter);
+        this.afterMap.setZoom(currentZoom);
 
-      // Re-add county boundaries and labels
-      this.loadCountyLayersAfterMap().then(() => {
-        // Apply special styling for aerial layer
-        if (layerValue === 'aerial') {
-          this.applyAerialCountyStyling();
-        }
+        // Re-add county boundaries and labels
+        this.loadCountyLayersAfterMap().then(() => {
+          // Apply black styling for streets boundaries
+          if (this.afterMap.getLayer('county-boundaries')) {
+            this.afterMap.setPaintProperty('county-boundaries', 'line-color', '#000000');
+            this.afterMap.setPaintProperty('county-boundaries', 'line-width', 1);
+            this.afterMap.setPaintProperty('county-boundaries', 'line-opacity', 0.9);
+          }
+
+          // Ensure ordering remains correct
+          this.ensureCountyLayersOnTopAfterMap();
+        });
+
+        console.log(`Base map style updated to: ${layerValue}`);
       });
-      
-      console.log(`Base map style updated to: ${layerValue}`);
-    });
+    } else {
+      // Wait for style to load, then restore county layers and position
+      this.afterMap.once('styledata', () => {
+        // Restore the map position
+        this.afterMap.setCenter(currentCenter);
+        this.afterMap.setZoom(currentZoom);
+
+        // Re-add county boundaries and labels
+        this.loadCountyLayersAfterMap().then(() => {
+          // Apply special styling for aerial layer
+          if (layerValue === 'aerial') {
+            this.applyAerialCountyStyling();
+          }
+
+          // Ensure ordering remains correct
+          this.ensureCountyLayersOnTopAfterMap();
+        });
+        
+        console.log(`Base map style updated to: ${layerValue}`);
+      });
+    }
   }
 
   // Restore default CARTO style for data layers
@@ -620,6 +675,9 @@ export class ComparisonMapManager {
     const layerOrder = [
       // Choropleth layers (bottom)
       'comparison-choropleth',
+      // Service area layers (above choropleth)
+      'service-area-fill',
+      'service-area-outline',
       // Isochrone layers (middle)
       'isochrone-30-min-border',
       'isochrone-20-min-border', 
@@ -630,7 +688,9 @@ export class ComparisonMapManager {
       'comparison-hover-outline',
       // County layers (top)
       'county-boundaries',
-      'county-label-text'
+      'county-label-text',
+      // Service area labels (topmost)
+      'service-area-label-text'
     ];
 
     // Move layers to proper order if they exist
@@ -1060,6 +1120,188 @@ export class ComparisonMapManager {
     if (dotTooltip) {
       dotTooltip.style.display = 'none';
     }
+  }
+
+  // Update service area layer on comparison map
+  async updateServiceAreaLayer() {
+    if (!this.afterMap) {
+      console.warn('After map not available for service area layer');
+      return;
+    }
+
+    console.log('Loading service area layer...');
+
+    // Remove any existing service area layers
+    this.removeServiceArea();
+
+    try {
+      // Load both service area geometry and labels in parallel
+      const [serviceAreaResponse, labelsResponse] = await Promise.all([
+        fetch('Data/ServiceAreas/NGHS_service-area.geojson'),
+        fetch('Data/ServiceAreas/NGHS-sa-labels.geojson')
+      ]);
+
+      if (!serviceAreaResponse.ok || !labelsResponse.ok) {
+        throw new Error('Failed to load service area data files');
+      }
+
+      const serviceAreaData = await serviceAreaResponse.json();
+      const labelsData = await labelsResponse.json();
+
+      console.log('Service area data loaded:', serviceAreaData.features?.length, 'features');
+      console.log('Labels data loaded:', labelsData.features?.length, 'labels');
+
+      // Add service area geometry source and layer
+      this.afterMap.addSource('service-area-geometry', {
+        type: 'geojson',
+        data: serviceAreaData
+      });
+
+      // Hide county layers when showing service areas (too confusing to show both)
+      this.hideCountyLayers();
+
+      // Create color expression based on service area names
+      const serviceAreaColors = [
+        'case',
+        ['==', ['get', 'service_area'], 'Habersham'], '#a87000',     // RGB(168, 112, 0)
+        ['==', ['get', 'service_area'], 'Lumpkin'], '#e9ffbe',       // RGB(233, 255, 190)
+        ['==', ['get', 'service_area'], 'Gainesville'], '#ffbeb4',   // RGB(255, 190, 180)
+        ['==', ['get', 'service_area'], 'Braselton'], '#beffe8',     // RGB(190, 255, 232)
+        ['==', ['get', 'service_area'], 'Barrow'], '#bee9ff',        // RGB(190, 233, 255)
+        '#96942E' // Default NGHS brand color for any unlisted service areas
+      ];
+
+      // Add service area fill layer with different colors per service area
+      this.afterMap.addLayer({
+        id: 'service-area-fill',
+        type: 'fill',
+        source: 'service-area-geometry',
+        paint: {
+          'fill-color': serviceAreaColors,
+          'fill-opacity': 0.4
+        }
+      });
+
+      // Add service area outline layer
+      this.afterMap.addLayer({
+        id: 'service-area-outline',
+        type: 'line',
+        source: 'service-area-geometry',
+        paint: {
+          'line-color': '#737373', // NGHS brand color
+          'line-width': 2,
+          'line-opacity': 0.8
+        }
+      });
+
+      // Add labels source and layer
+      this.afterMap.addSource('service-area-labels', {
+        type: 'geojson',
+        data: labelsData
+      });
+
+      // Add text labels layer (using same styling as county labels that work)
+      this.afterMap.addLayer({
+        id: 'service-area-label-text',
+        type: 'symbol',
+        source: 'service-area-labels',
+        layout: {
+          'text-field': ['get', 'label'],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'], // Same as county labels
+          'text-size': 20,  // Slightly larger for service areas
+          'text-anchor': 'center',
+          'text-allow-overlap': true,
+          'text-ignore-placement': false,
+          'text-optional': false,
+          'text-transform': 'uppercase',
+        },
+        paint: {
+          'text-color': '#252525', // Same dark color as county labels
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 2 // Same halo as county labels
+        }
+      });
+
+      console.log('Service area labels layer added successfully');
+
+      // Small delay to ensure labels are processed, then set proper layer ordering
+      setTimeout(() => {
+        this.ensureCountyLayersOnTopAfterMap();
+        console.log('Layer ordering complete - service area labels should be visible');
+      }, 100);
+
+      console.log('Service area layer loaded successfully');
+
+    } catch (error) {
+      console.error('Error loading service area layer:', error);
+    }
+  }
+
+  // Remove service area layers and cleanup
+  removeServiceArea() {
+    if (!this.afterMap) return;
+
+    // Remove layers if they exist
+    const layersToRemove = [
+      'service-area-label-text',
+      'service-area-outline', 
+      'service-area-fill'
+    ];
+
+    layersToRemove.forEach(layerId => {
+      if (this.afterMap.getLayer(layerId)) {
+        this.afterMap.removeLayer(layerId);
+      }
+    });
+
+    // Remove sources if they exist
+    const sourcesToRemove = [
+      'service-area-labels',
+      'service-area-geometry'
+    ];
+
+    sourcesToRemove.forEach(sourceId => {
+      if (this.afterMap.getSource(sourceId)) {
+        this.afterMap.removeSource(sourceId);
+      }
+    });
+
+    // Restore county layers when service area is removed
+    this.showCountyLayers();
+
+    console.log('Service area layers removed');
+  }
+
+  // Hide county layers when showing service areas
+  hideCountyLayers() {
+    if (!this.afterMap) return;
+
+    // Hide county boundary and label layers
+    const countyLayers = ['county-boundaries', 'county-label-text'];
+    
+    countyLayers.forEach(layerId => {
+      if (this.afterMap.getLayer(layerId)) {
+        this.afterMap.setLayoutProperty(layerId, 'visibility', 'none');
+      }
+    });
+
+    console.log('County layers hidden for service area display');
+  }
+
+  // Show county layers when service areas are removed
+  showCountyLayers() {
+    if (!this.afterMap) return;
+
+    // Show county boundary and label layers
+    const countyLayers = ['county-boundaries', 'county-label-text'];
+    
+    countyLayers.forEach(layerId => {
+      if (this.afterMap.getLayer(layerId)) {
+        this.afterMap.setLayoutProperty(layerId, 'visibility', 'visible');
+      }
+    });
+
+    console.log('County layers restored');
   }
 
   // Remove comparison choropleth layers

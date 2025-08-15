@@ -7,6 +7,7 @@ import { loadPermitData } from './permits.js';
 import { loadDrivetimeStats } from './drivetimeStats.js';
 import { ComparisonMapManager } from './comparisonMap.js';
 import { PossibleSitesManager } from './possibleSites.js';
+import { authenticationManager } from './authentication.js';
 
 class NGHSFootprintApp {
     constructor() {
@@ -165,13 +166,23 @@ class NGHSFootprintApp {
 // Create and initialize the app
 const app = new NGHSFootprintApp();
 
-// Initialize when page loads
+// Wire login/logout handlers
+authenticationManager.onLogin = () => {
+    if (!app.isReady()) {
+        app.initialize();
+    }
+};
+authenticationManager.onLogout = () => {
+    // Optionally: reset UI or keep app state; overlay will block interactions after logout.
+};
+
+// Initialize authentication when page loads; app starts after successful login
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        app.initialize();
+        authenticationManager.init();
     });
 } else {
-    app.initialize();
+    authenticationManager.init();
 }
 
 // Export the app instance for use by other modules if needed
