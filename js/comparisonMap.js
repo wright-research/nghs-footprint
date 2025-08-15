@@ -1163,11 +1163,11 @@ export class ComparisonMapManager {
       // Create color expression based on service area names
       const serviceAreaColors = [
         'case',
-        ['==', ['get', 'service_area'], 'Habersham'], '#a87000',     // RGB(168, 112, 0)
-        ['==', ['get', 'service_area'], 'Lumpkin'], '#e9ffbe',       // RGB(233, 255, 190)
-        ['==', ['get', 'service_area'], 'Gainesville'], '#ffbeb4',   // RGB(255, 190, 180)
-        ['==', ['get', 'service_area'], 'Braselton'], '#beffe8',     // RGB(190, 255, 232)
-        ['==', ['get', 'service_area'], 'Barrow'], '#bee9ff',        // RGB(190, 233, 255)
+        ['==', ['get', 'service_area'], 'Habersham'], '#a87000',     
+        ['==', ['get', 'service_area'], 'Lumpkin'], '#e9ffbe',       
+        ['==', ['get', 'service_area'], 'Gainesville'], '#ffbeb4',   
+        ['==', ['get', 'service_area'], 'Braselton'], '#bee9ff',     
+        ['==', ['get', 'service_area'], 'Barrow'], '#beffe8',        
         '#96942E' // Default NGHS brand color for any unlisted service areas
       ];
 
@@ -1178,7 +1178,7 @@ export class ComparisonMapManager {
         source: 'service-area-geometry',
         paint: {
           'fill-color': serviceAreaColors,
-          'fill-opacity': 0.4
+          'fill-opacity': 0.6
         }
       });
 
@@ -1188,7 +1188,7 @@ export class ComparisonMapManager {
         type: 'line',
         source: 'service-area-geometry',
         paint: {
-          'line-color': '#737373', // NGHS brand color
+          'line-color': '#737373', 
           'line-width': 2,
           'line-opacity': 0.8
         }
@@ -1207,8 +1207,8 @@ export class ComparisonMapManager {
         source: 'service-area-labels',
         layout: {
           'text-field': ['get', 'label'],
-          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'], // Same as county labels
-          'text-size': 20,  // Slightly larger for service areas
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'], 
+          'text-size': 18,  
           'text-anchor': 'center',
           'text-allow-overlap': true,
           'text-ignore-placement': false,
