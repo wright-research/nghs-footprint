@@ -5,7 +5,7 @@
 "features": [
 { "type": "Feature", "properties": { "id": 1, "label": "Habersham" }, "geometry": { "type": "Point", "coordinates": [ -83.54052554338729, 34.692669137133898 ] } },
 { "type": "Feature", "properties": { "id": 2, "label": "Lumpkin" }, "geometry": { "type": "Point", "coordinates": [ -84.040421808086265, 34.477576074031212 ] } },
-{ "type": "Feature", "properties": { "id": 3, "label": "Gainesville" }, "geometry": { "type": "Point", "coordinates": [ -83.762701661031286, 34.324811246228307 ] } },
+{ "type": "Feature", "properties": { "id": 3, "label": "Gainesville" }, "geometry": { "type": "Point", "coordinates": [ -83.781266356920156, 34.399314981981284 ] } },
 { "type": "Feature", "properties": { "id": 4, "label": "Braselton" }, "geometry": { "type": "Point", "coordinates": [ -83.748301357109895, 34.112175794732956 ] } },
 { "type": "Feature", "properties": { "id": 5, "label": "Barrow" }, "geometry": { "type": "Point", "coordinates": [ -83.775044778678151, 33.887051064394292 ] } }
 ]

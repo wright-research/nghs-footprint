@@ -437,12 +437,9 @@ export class MapManager {
 
     // Ensure county layers stay on top of all other layers
     ensureCountyLayersOnTop() {
-        // Move county boundaries to top if they exist
         if (this.map.getLayer('county-boundaries')) {
             this.map.moveLayer('county-boundaries');
         }
-
-        // Move county labels to top (above boundaries) if they exist
         if (this.map.getLayer('county-label-text')) {
             this.map.moveLayer('county-label-text');
         }
@@ -979,4 +976,5 @@ export class MapManager {
     }
 
     // Add any additional map methods here as needed
+
 } 

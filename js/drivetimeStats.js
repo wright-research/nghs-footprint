@@ -161,13 +161,51 @@ function handleDepartmentChange() {
     if (departmentRow) {
         // Populate the table with Within column only
         if (statsBody) {
-            const v10 = departmentRow.visits_10 ? Number(departmentRow.visits_10).toLocaleString() : '';
-            const v20 = departmentRow.visits_20 ? Number(departmentRow.visits_20).toLocaleString() : '';
-            const v30 = departmentRow.visits_30 ? Number(departmentRow.visits_30).toLocaleString() : '';
-            const vTotal = departmentRow.visits_sum_universe ? Number(departmentRow.visits_sum_universe).toLocaleString() : '';
-            const p10 = departmentRow['visits_10_%'] ? Math.round(Number(departmentRow['visits_10_%'])) + '%' : '';
-            const p20 = departmentRow['visits_20_%'] ? Math.round(Number(departmentRow['visits_20_%'])) + '%' : '';
-            const p30 = departmentRow['visits_30_%'] ? Math.round(Number(departmentRow['visits_30_%'])) + '%' : '';
+            // Robust numeric parsing that preserves zero values
+            const parseNumeric = (value) => {
+                if (value === null || value === undefined || value === '') return null;
+                const num = Number(String(value).replace(/,/g, ''));
+                return Number.isFinite(num) ? num : null;
+            };
+
+            const v10Num = parseNumeric(departmentRow.visits_10);
+            const v20Num = parseNumeric(departmentRow.visits_20);
+            const v30Num = parseNumeric(departmentRow.visits_30);
+            const vTotalNum = parseNumeric(departmentRow.visits_sum_universe);
+
+            // Prefer calculating remainder as Total - Within 30; fallback to CSV column if needed
+            let vRemainderNum = null;
+            if (vTotalNum !== null && v30Num !== null) {
+                vRemainderNum = Math.max(0, vTotalNum - v30Num);
+            } else {
+                vRemainderNum = parseNumeric(departmentRow.visits_remainder);
+            }
+
+            // Percentages
+            const p10NumCsv = parseNumeric(departmentRow['visits_10_%']);
+            const p20NumCsv = parseNumeric(departmentRow['visits_20_%']);
+            let p30Num = parseNumeric(departmentRow['visits_30_%']);
+            if (p30Num === null && v30Num !== null && vTotalNum !== null && vTotalNum > 0) {
+                p30Num = (v30Num / vTotalNum) * 100;
+            }
+            let pRemainderNum = parseNumeric(departmentRow['visits_remainder_%']);
+            if (pRemainderNum === null && p30Num !== null) {
+                pRemainderNum = 100 - p30Num;
+            } else if (pRemainderNum === null && vRemainderNum !== null && vTotalNum !== null && vTotalNum > 0) {
+                pRemainderNum = (vRemainderNum / vTotalNum) * 100;
+            }
+
+            // Format for display
+            const v10 = v10Num !== null ? v10Num.toLocaleString() : '';
+            const v20 = v20Num !== null ? v20Num.toLocaleString() : '';
+            const v30 = v30Num !== null ? v30Num.toLocaleString() : '';
+            const vRemainder = vRemainderNum !== null ? vRemainderNum.toLocaleString() : '';
+            const vTotal = vTotalNum !== null ? vTotalNum.toLocaleString() : '';
+
+            const p10 = p10NumCsv !== null ? Math.round(p10NumCsv) + '%' : '';
+            const p20 = p20NumCsv !== null ? Math.round(p20NumCsv) + '%' : '';
+            const p30 = p30Num !== null ? Math.round(p30Num) + '%' : '';
+            const pRemainder = pRemainderNum !== null ? Math.round(pRemainderNum) + '%' : '';
             const pTotal = '100%';
             statsBody.innerHTML = `
                 <tr>
@@ -178,6 +216,7 @@ function handleDepartmentChange() {
                 <tr id="stats-row-10"><td>10 min</td><td>${v10}</td><td>${p10}</td></tr>
                 <tr id="stats-row-20"><td>20 min</td><td>${v20}</td><td>${p20}</td></tr>
                 <tr id="stats-row-30"><td>30 min</td><td>${v30}</td><td>${p30}</td></tr>
+                <tr id="stats-row-remainder"><td>> 30 min</td><td>${vRemainder}</td><td>${pRemainder}</td></tr>
                 <tr><td><i>Total</i></td><td><i>${vTotal}</i></td><td><i>${pTotal}</i></td></tr>
             `;
             
