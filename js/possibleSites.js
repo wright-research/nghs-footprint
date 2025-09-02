@@ -8,12 +8,23 @@ export class PossibleSitesManager {
         this.comparisonSiteMarkers = []; // Markers on comparison map
         this.isActive = false;
         
-        // Site coordinates (lat, lng format)
-        this.siteLocations = [
-            [34.282624436396034, -84.07551550163099],
-            [34.25355342288231, -84.09095084214657],
-            [34.10703981804112, -83.59378720792247],
-            [34.10113213953785, -83.59355942525713]
+        // Site configurations with names, coordinates (lat, lng format), and PDF files
+        this.siteConfigs = [
+            {
+                name: "Cumming-Alternate",
+                coordinates: [34.282624436396034, -84.07551550163099],
+                pdfFile: "Cumming-Alternate.pdf"
+            },
+            {
+                name: "Cumming-Combined", 
+                coordinates: [34.25468383832496, -84.08833863749409],
+                pdfFile: "Cumming-Combined.pdf"
+            },
+            {
+                name: "Jefferson",
+                coordinates: [34.10113213953785, -83.59355942525713],
+                pdfFile: "Jefferson.pdf"
+            }
         ];
     }
 
@@ -66,8 +77,8 @@ export class PossibleSitesManager {
 
         // Add markers to main map
         const mainMap = this.mapManager.getMap();
-        this.siteLocations.forEach((coords, index) => {
-            const marker = this.createSiteMarker(mainMap, coords, index);
+        this.siteConfigs.forEach((siteConfig, index) => {
+            const marker = this.createSiteMarker(mainMap, siteConfig, index);
             if (marker) {
                 this.siteMarkers.push(marker);
             }
@@ -77,8 +88,8 @@ export class PossibleSitesManager {
         if (this.comparisonMapManager && this.comparisonMapManager.isActive()) {
             const comparisonMap = this.comparisonMapManager.getAfterMap();
             if (comparisonMap) {
-                this.siteLocations.forEach((coords, index) => {
-                    const marker = this.createSiteMarker(comparisonMap, coords, index);
+                this.siteConfigs.forEach((siteConfig, index) => {
+                    const marker = this.createSiteMarker(comparisonMap, siteConfig, index);
                     if (marker) {
                         this.comparisonSiteMarkers.push(marker);
                     }
@@ -109,12 +120,12 @@ export class PossibleSitesManager {
     }
 
     // Create a site marker for a specific map and location
-    createSiteMarker(map, coords, index) {
-        if (!map) {
+    createSiteMarker(map, siteConfig, index) {
+        if (!map || !siteConfig) {
             return null;
         }
 
-        // Create custom red marker element
+        // Create custom marker element
         const el = document.createElement('div');
         el.className = 'possible-site-marker';
         el.style.width = '16px';
@@ -126,15 +137,34 @@ export class PossibleSitesManager {
         el.style.cursor = 'pointer';
 
         // Convert coordinates to Mapbox format (longitude, latitude)
-        const mapboxCoords = [coords[1], coords[0]]; // Reverse lat/lng to lng/lat
+        const mapboxCoords = [siteConfig.coordinates[1], siteConfig.coordinates[0]]; // Reverse lat/lng to lng/lat
 
-        // Create popup for this site
-        const siteName = `Site ${index + 1}`;
+        // Create enhanced popup for this site
+        const popupContent = `
+            <div style="padding: 8px; font-family: Arial, sans-serif;">
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px; text-align: center;">${siteConfig.name}</div>
+                <div 
+                    style="
+                        color: #007cbf; 
+                        cursor: pointer; 
+                        text-decoration: underline;
+                        font-size: 14px;
+                        padding: 4px 0;
+                    "
+                    onclick="window.open('Data/StaticMaps/${siteConfig.pdfFile}', '_blank')"
+                    onmouseover="this.style.color='#005a87'"
+                    onmouseout="this.style.color='#007cbf'"
+                >
+                    Click here to open site map
+                </div>
+            </div>
+        `;
+
         const popup = new mapboxgl.Popup({
             offset: 25,
             closeButton: true,
             closeOnClick: false
-        }).setHTML(`<div style="padding: 6px; font-size: 18px; font-weight: bold;">${siteName}</div>`);
+        }).setHTML(popupContent);
 
         // Create the marker with popup
         const marker = new mapboxgl.Marker(el)
