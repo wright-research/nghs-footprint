@@ -130,6 +130,10 @@ export class MapManager {
             center: [34.87068984, -83.40153657], // Clayton, GA
             zoom: 11
         },
+        'GHI-Cleveland': {
+            center: [34.634714343155146, -83.74563998454451], // Cleveland, GA
+            zoom: 11
+        },
         'GHI-Cumming': {
             center: [34.18482735, -84.12386131], // Cumming, GA
             zoom: 11
@@ -146,152 +150,212 @@ export class MapManager {
             center: [34.0687694, -83.90835065], // Hamilton Mill, GA
             zoom: 11
         },
-        'Medical-Plaza-Bethlehem': {
+        'GHI-MP1-Bethlehem': {
             center: [33.94136499, -83.75982668], // Bethlehem, GA
             zoom: 11
         },
-        'Medical-Plaza-1-Braselton': {
-            center: [34.1175788, -83.8399132], // Braselton, GA
+        'GHI-MP1-Buford': {
+            center: [34.10464183481392, -84.00181124255549], // Buford, GA
             zoom: 11
         },
-        'Medical-Plaza-B-Braselton': {
-            center: [34.12025076, -83.83741488], // Braselton, GA
-            zoom: 11
-        },
-        'Medical-Plaza-Buford': {
-            center: [34.10452643, -84.00192586], // Buford, GA
-            zoom: 11
-        },
-        'Medical-Plaza-1-Dawsonville': {
-            center: [34.36873143, -84.03310797], // Dawsonville, GA
-            zoom: 11
-        },
-        'Medical-Plaza-2-Dawsonville': {
-            center: [34.36813678, -84.03349141], // Dawsonville, GA
-            zoom: 11
-        },
-        'Medical-Plaza-1-Flowery-Branch': {
-            center: [34.18004739, -83.91876058], // Flowery Branch, GA
-            zoom: 11
-        },
-        'Medical-Park-1-Gainesville': {
-            center: [34.30536345, -83.81123521], // Gainesville, GA
-            zoom: 11
-        },
-        'Medical-Park-2-Gainesville': {
-            center: [34.30692963, -83.80956252], // Gainesville, GA
-            zoom: 11
-        },
-        'Medical-Plaza-Jefferson': {
+        'GHI-MP1-Jefferson': {
             center: [34.10521564, -83.59336152], // Jefferson, GA
             zoom: 11
         },
-        'Medical-Plaza-1-Thompson-Bridge': {
-            center: [34.37260708, -83.87225646], // Thompson Bridge area
+        'GHI-MP2-Dawsonville': {
+            center: [34.368317342880566, -84.03345625512794], // Dawsonville, GA
             zoom: 11
         },
-        'NGHS-Cleveland-MOB': {
-            center: [34.63471161, -83.74568103], // Cleveland, GA
+        'GHI-MPB-Braselton': {
+            center: [34.12025076, -83.83741488], // Braselton, GA
             zoom: 11
         },
-        'NGMC-Barrow-MOB': {
-            center: [34.00806975, -83.70768917], // Barrow County area
-            zoom: 11
-        },
-        'NGPG-Auburn-Primary-Care': {
-            center: [34.01045568, -83.82401803], // Auburn, GA
-            zoom: 11
-        },
-        'NGPG-Chestnut-Mountain': {
-            center: [34.19255169, -83.86023549], // Chestnut Mountain area
-            zoom: 11
-        },
-        'NGPG-Clayton-Primary-Care': {
-            center: [34.88036399, -83.39973462], // Clayton, GA
-            zoom: 11
-        },
-        'NGPG-Community-Clinic': {
-            center: [34.28671952, -83.80418067], // Gainesville area
-            zoom: 11
-        },
-        'Concierge-Medicine': {
-            center: [34.30462881, -83.81214518], // Gainesville area
-            zoom: 11
-        },
-        'NGPG-Cumming': {
-            center: [34.25507313, -84.09066905], // Cumming, GA
-            zoom: 11
-        },
-        'NGPG-Dacula-Primary-Care': {
-            center: [34.0088468, -83.91609719], // Dacula, GA
-            zoom: 11
-        },
-        'NGPG-Dahlonega': {
-            center: [34.52511456, -83.97985496], // Dahlonega, GA
-            zoom: 11
-        },
-        'Dawsonville-Surgical-Associates': {
-            center: [34.36871906, -84.03312642], // Dawsonville, GA
-            zoom: 11
-        },
-        'NGPG-Family-Medicine-Lavonia': {
-            center: [34.42846483, -83.10588151], // Lavonia, GA
-            zoom: 11
-        },
-        'NGPG-Hamilton-Mill': {
-            center: [34.06873155, -83.9083655], // Hamilton Mill, GA
-            zoom: 11
-        },
-        'NGPG-Internal-Medicine-Demorest': {
-            center: [34.58527154, -83.53625313], // Demorest, GA
-            zoom: 11
-        },
-        'NGPG-Oakwood': {
-            center: [34.23462493, -83.87316526], // Oakwood, GA
-            zoom: 11
-        },
-        'NGPG-Orthopedic-Surgery-Sports-Medicine': {
-            center: [34.58026403, -83.539835], // Demorest, GA
-            zoom: 11
-        },
-        'NGPG-Orthopedic-Surgery-Dahlonega': {
-            center: [34.47067524, -83.96826953], // Dahlonega, GA
-            zoom: 11
-        },
-        'NGPG-Orthopedic-Surgery-Hamilton-Mill': {
-            center: [34.06865318, -83.90461233], // Hamilton Mill, GA
-            zoom: 11
-        },
-        'NGPG-Orthopedic-Surgery-Toccoa': {
+        'GHI-Toccoa': {
             center: [34.57996710408609, -83.3182789268724], // Toccoa, GA
             zoom: 11
         },
-        'NGPG-Orthopedic-Trauma-Recon-Surgery': {
-            center: [34.30765634, -83.81676159], // Gainesville area
+        'GHI-Wisteria': {
+            center: [34.30353219, -83.81585212], // Gainesville, GA
+            zoom: 11
+        },
+        'NGPG-FM-Auburn': {
+            center: [34.01045568, -83.82401803], // Auburn, GA
+            zoom: 11
+        },
+        'NGPG-FM-Chestnut-Mountain': {
+            center: [34.19255169, -83.86023549], // Chestnut Mountain area
+            zoom: 11
+        },
+        'NGPG-FM-Clayton': {
+            center: [34.88036399, -83.39973462], // Clayton, GA
+            zoom: 11
+        },
+        'NGPG-FM-Community-Clinic': {
+            center: [34.28671952, -83.80418067], // Gainesville area
+            zoom: 11
+        },
+        'NGPG-FM-Concierge-Medicine': {
+            center: [34.30462881, -83.81214518], // Gainesville area
+            zoom: 11
+        },
+        'NGPG-FM-Cumming': {
+            center: [34.25507313, -84.09066905], // Cumming, GA
+            zoom: 11
+        },
+        'NGPG-FM-Dacula': {
+            center: [34.0088468, -83.91609719], // Dacula, GA
+            zoom: 11
+        },
+        'NGPG-FM-Dahlonega': {
+            center: [34.52511456, -83.97985496], // Dahlonega, GA
+            zoom: 11
+        },
+        'NGPG-FM-Hamilton-Mill': {
+            center: [34.06873155, -83.9083655], // Hamilton Mill, GA
+            zoom: 11
+        },
+        'NGPG-FM-Lavonia': {
+            center: [34.42846483, -83.10588151], // Lavonia, GA
+            zoom: 11
+        },
+        'NGPG-FM-Oakwood': {
+            center: [34.23462493, -83.87316526], // Oakwood, GA
+            zoom: 11
+        },
+        'NGPG-FM-West-Jackson': {
+            center: [34.10828999, -83.70612262], // West Jackson area
+            zoom: 11
+        },
+        'NGPG-FM-MP1-Bethlehem': {
+            center: [33.941334499649535, -83.75973794878723], // Bethlehem, GA
+            zoom: 11
+        },
+        'NGPG-FM-MP1-Buford': {
+            center: [34.10464183481392, -84.00181124255549], // Buford, GA
+            zoom: 11
+        },
+        'NGPG-FM-MP1-Flowery-Branch': {
+            center: [34.18004739, -83.91876058], // Flowery Branch, GA
+            zoom: 11
+        },
+        'NGPG-FM-MP1-Jefferson': {
+            center: [34.10521564, -83.59336152], // Jefferson, GA
+            zoom: 11
+        },
+        'NGPG-FM-NGMC-Barrow-MOB': {
+            center: [34.00806975, -83.70768917], // Barrow County area
+            zoom: 11
+        },
+        'NGPG-FM-IM-Cleveland': {
+            center: [34.63471161, -83.74568103], // Cleveland, GA
+            zoom: 11
+        },
+        'NGPG-FM-IM-MP1-Braselton': {
+            center: [34.1175788, -83.8399132], // Braselton, GA
+            zoom: 11
+        },
+        'NGPG-FM-IM-MP1-Dawsonville': {
+            center: [34.36873143, -84.03310797], // Dawsonville, GA
+            zoom: 11
+        },
+        'NGPG-FM-IM-MP2-Gainesville': {
+            center: [34.30692963, -83.80956252], // Gainesville, GA
+            zoom: 11
+        },
+        'NGPG-FM-IM-Toccoa': {
+            center: [34.57997561485314, -83.3184000479576], // Toccoa, GA
+            zoom: 11
+        },
+        'NGPG-IM-Demorest': {
+            center: [34.58527154, -83.53625313], // Demorest, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Gainesville': {
+            center: [34.30765634, -83.81676159], // Gainesville, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-Cleveland': {
+            center: [34.63471161, -83.74568103], // Cleveland, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-Dahlonega': {
+            center: [34.47067524, -83.96826953], // Dahlonega, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-Demorest': {
+            center: [34.58026403, -83.539835], // Demorest, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-Hamilton-Mill': {
+            center: [34.06865318, -83.90461233], // Hamilton Mill, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-MP1-Bethlehem': {
+            center: [33.941334499649535, -83.75973794878723], // Bethlehem, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-MP1-Buford': {
+            center: [34.10464183481392, -84.00181124255549], // Buford, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-MP2-Dawsonville': {
+            center: [34.36836889320002, -84.03344442296216], // Dawsonville, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-MPB-Braselton': {
+            center: [34.12025076, -83.83741488], // Braselton, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-Toccoa': {
+            center: [34.57996710408609, -83.3182789268724], // Toccoa, GA
+            zoom: 11
+        },
+        'NGPG-Ortho-Surgery-MP1-Gainesville': {
+            center: [34.30537305058233, -83.81118341486828], // Gainesville, GA
+            zoom: 11
+        },
+        'NGPG-Surgical-Associates-Cleveland': {
+            center: [34.63471161, -83.74568103], // Cleveland, GA
+            zoom: 11
+        },
+        'NGPG-Surgical-Associates-Dawsonville': {
+            center: [34.36874472805684, -84.03419862873912], // Dawsonville, GA
             zoom: 11
         },
         'NGPG-Surgical-Associates-Demorest': {
             center: [34.58524702, -83.53623573], // Demorest, GA
             zoom: 11
         },
+        'NGPG-Surgical-Associates-MP1-Bethlehem': {
+            center: [33.941334499649535, -83.75973794878723], // Bethlehem, GA
+            zoom: 11
+        },
+        'NGPG-Surgical-Associates-MP1-Buford': {
+            center: [34.10464183481392, -84.00181124255549], // Buford, GA
+            zoom: 11
+        },
+        'NGPG-Surgical-Associates-MP1-Jefferson': {
+            center: [34.10521564, -83.59336152], // Jefferson, GA
+            zoom: 11
+        },
+        'NGPG-Surgical-Associates-MP2-Gainesville': {
+            center: [34.30692963, -83.80956252], // Gainesville, GA
+            zoom: 11
+        },
+        'NGPG-Surgical-Associates-MPB-Braselton': {
+            center: [34.12025076, -83.83741488], // Braselton, GA
+            zoom: 11
+        },
         'NGPG-Surgical-Associates-Toccoa': {
             center: [34.57996710408609, -83.3182789268724], // Toccoa, GA
             zoom: 11
         },
-        'NGPG-West-Jackson': {
-            center: [34.10828999, -83.70612262], // West Jackson area
-            zoom: 11
-        },
-        'Toccoa-Clinic': {
-            center: [34.57997561485314, -83.3184000479576], // Toccoa, GA
+        'NGPG-MP1-Thompson-Bridge': {
+            center: [34.37260708, -83.87225646], // Thompson Bridge area
             zoom: 11
         },
         'Urgent-Care-Jefferson': {
             center: [34.10521564, -83.59336152], // Jefferson, GA
-            zoom: 11
-        },
-        'Wisteria-Medical-Office-Building': {
-            center: [34.30353219, -83.81585212], // Gainesville area
             zoom: 11
         }
     };
@@ -509,47 +573,63 @@ export class MapManager {
         'All': 'Total_Visits',
         'GHI-Blairsville': 'GHI Blairsville',
         'GHI-Clayton': 'GHI Clayton',
+        'GHI-Cleveland': 'GHI Cleveland',
         'GHI-Cumming': 'GHI Cumming',
         'GHI-Dahlonega': 'GHI Dahlonega',
         'GHI-Habersham': 'GHI Habersham',
         'GHI-Hamilton-Mill': 'GHI Hamilton Mill',
-        'Medical-Plaza-Bethlehem': 'Medical Plaza in Bethlehem',
-        'Medical-Plaza-1-Braselton': 'Medical Plaza 1 in Braselton',
-        'Medical-Plaza-B-Braselton': 'Medical Plaza B in Braselton',
-        'Medical-Plaza-Buford': 'Medical Plaza in Buford',
-        'Medical-Plaza-1-Dawsonville': 'Medical Plaza 1 in Dawsonville',
-        'Medical-Plaza-2-Dawsonville': 'Medical Plaza 2 in Dawsonville',
-        'Medical-Plaza-1-Flowery-Branch': 'Medical Plaza 1 in Flowery Branch',
-        'Medical-Park-1-Gainesville': 'Medical Park 1 in Gainesville',
-        'Medical-Park-2-Gainesville': 'Medical Park 2 in Gainesville',
-        'Medical-Plaza-Jefferson': 'Medical Plaza in Jefferson',
-        'Medical-Plaza-1-Thompson-Bridge': 'Medical Plaza at Thompson Bridge',
-        'NGHS-Cleveland-MOB': 'NGHS Cleveland MOB',
-        'NGMC-Barrow-MOB': 'NGMC Barrow MOB',
-        'NGPG-Auburn-Primary-Care': 'NGPG Auburn Primary Care',
-        'NGPG-Chestnut-Mountain': 'NGPG Chestnut Mountain',
-        'NGPG-Clayton-Primary-Care': 'NGPG Clayton Primary Care',
-        'NGPG-Community-Clinic': 'NGPG Community Clinic',
-        'Concierge-Medicine': 'NGPG Concierge Medicine',
-        'NGPG-Cumming': 'NGPG Cumming',
-        'NGPG-Dacula-Primary-Care': 'NGPG Dacula Primary Care',
-        'NGPG-Dahlonega': 'NGPG Dahlonega',
-        'Dawsonville-Surgical-Associates': 'NGPG Dawsonville Surgical Associates',
-        'NGPG-Family-Medicine-Lavonia': 'NGPG Family Medicine in Lavonia',
-        'NGPG-Hamilton-Mill': 'NGPG Hamilton Mill',
-        'NGPG-Internal-Medicine-Demorest': 'NGPG Internal Medicine in Demorest',
-        'NGPG-Oakwood': 'NGPG Oakwood',
-        'NGPG-Orthopedic-Surgery-Sports-Medicine': 'NGPG Orthopedic Surgery & Sports Medicine in Demorest',
-        'NGPG-Orthopedic-Surgery-Dahlonega': 'NGPG Orthopedic Surgery in Dahlonega',
-        'NGPG-Orthopedic-Surgery-Hamilton-Mill': 'NGPG Orthopedic Surgery in Hamilton Mill',
-        'NGPG-Orthopedic-Surgery-Toccoa': 'NGPG Orthopedic Surgery in Toccoa',
-        'NGPG-Orthopedic-Trauma-Recon-Surgery': 'NGPG Orthopedic Trauma & Reconstructive Surgery',
-        'NGPG-Surgical-Associates-Demorest': 'NGPG Surgical Associates in Demorest',
-        'NGPG-Surgical-Associates-Toccoa': 'NGPG Surgical Associates in Toccoa',
-        'NGPG-West-Jackson': 'NGPG West Jackson',
-        'Toccoa-Clinic': 'Toccoa Clinic',
-        'Urgent-Care-Jefferson': 'Urgent Care Jefferson',
-        'Wisteria-Medical-Office-Building': 'Wisteria Medical Office Building'
+        'GHI-MP1-Bethlehem': 'GHI at MP1 in Bethlehem',
+        'GHI-MP1-Buford': 'GHI at MP1 in Buford',
+        'GHI-MP1-Jefferson': 'GHI at MP1 in Jefferson',
+        'GHI-MP2-Dawsonville': 'GHI at MP2 in Dawsonville',
+        'GHI-MPB-Braselton': 'GHI at MPB in Braselton',
+        'GHI-Toccoa': 'GHI at Toccoa Clinic',
+        'GHI-Wisteria': 'GHI at Wisteria MOB',
+        'NGPG-FM-Auburn': 'NGPG FM Auburn',
+        'NGPG-FM-Chestnut-Mountain': 'NGPG FM Chestnut Mountain',
+        'NGPG-FM-Clayton': 'NGPG FM Clayton',
+        'NGPG-FM-Community-Clinic': 'NGPG FM Community Clinic Gainesville',
+        'NGPG-FM-Concierge-Medicine': 'NGPG FM Concierge Medicine Gainesville',
+        'NGPG-FM-Cumming': 'NGPG FM Cumming',
+        'NGPG-FM-Dacula': 'NGPG FM Dacula',
+        'NGPG-FM-Dahlonega': 'NGPG FM Dahlonega',
+        'NGPG-FM-Hamilton-Mill': 'NGPG FM Hamilton Mill',
+        'NGPG-FM-Lavonia': 'NGPG FM Lavonia',
+        'NGPG-FM-Oakwood': 'NGPG FM Oakwood',
+        'NGPG-FM-West-Jackson': 'NGPG FM West Jackson in Hoschton',
+        'NGPG-FM-MP1-Bethlehem': 'NGPG FM at MP1 in Bethlehem',
+        'NGPG-FM-MP1-Buford': 'NGPG FM at MP1 in Buford',
+        'NGPG-FM-MP1-Flowery-Branch': 'NGPG FM at MP1 in Flowery Branch',
+        'NGPG-FM-MP1-Jefferson': 'NGPG FM at MP1 in Jefferson',
+        'NGPG-FM-NGMC-Barrow-MOB': 'NGPG FM at NGMC Barrow MOB',
+        'NGPG-FM-IM-Cleveland': 'NGPG FM/IM Cleveland',
+        'NGPG-FM-IM-MP1-Braselton': 'NGPG FM/IM at MP1 in Braselton',
+        'NGPG-FM-IM-MP1-Dawsonville': 'NGPG FM/IM at MP1 in Dawsonville',
+        'NGPG-FM-IM-MP2-Gainesville': 'NGPG FM/IM at MP2 in Gainesville',
+        'NGPG-FM-IM-Toccoa': 'NGPG FM/IM at Toccoa Clinic',
+        'NGPG-IM-Demorest': 'NGPG IM Demorest',
+        'NGPG-Ortho-Gainesville': 'NGPG Ortho Trauma Gainesville',
+        'NGPG-Ortho-Surgery-Cleveland': 'NGPG Orthopedic Surgery Cleveland',
+        'NGPG-Ortho-Surgery-Dahlonega': 'NGPG Orthopedic Surgery Dahlonega',
+        'NGPG-Ortho-Surgery-Demorest': 'NGPG Orthopedic Surgery Demorest',
+        'NGPG-Ortho-Surgery-Hamilton-Mill': 'NGPG Orthopedic Surgery Hamilton Mill',
+        'NGPG-Ortho-Surgery-MP1-Bethlehem': 'NGPG Orthopedic Surgery at MP1 in Bethlehem',
+        'NGPG-Ortho-Surgery-MP1-Buford': 'NGPG Orthopedic Surgery at MP1 in Buford',
+        'NGPG-Ortho-Surgery-MP2-Dawsonville': 'NGPG Orthopedic Surgery at MP2 in Dawsonville',
+        'NGPG-Ortho-Surgery-MPB-Braselton': 'NGPG Orthopedic Surgery at MPB in Braselton',
+        'NGPG-Ortho-Surgery-Toccoa': 'NGPG Orthopedic Surgery at Toccoa Clinic',
+        'NGPG-Ortho-Surgery-MP1-Gainesville': 'NGPG Orthopedic Surgery at MP1 in Gainesville',
+        'NGPG-Surgical-Associates-Cleveland': 'NGPG Surgical Associates Cleveland',
+        'NGPG-Surgical-Associates-Dawsonville': 'NGPG Surgical Associates Dawsonville',
+        'NGPG-Surgical-Associates-Demorest': 'NGPG Surgical Associates Demorest',
+        'NGPG-Surgical-Associates-MP1-Bethlehem': 'NGPG Surgical Associates at MP1 in Bethlehem',
+        'NGPG-Surgical-Associates-MP1-Buford': 'NGPG Surgical Associates at MP1 in Buford',
+        'NGPG-Surgical-Associates-MP1-Jefferson': 'NGPG Surgical Associates at MP1 in Jefferson',
+        'NGPG-Surgical-Associates-MP2-Gainesville': 'NGPG Surgical Associates at MP2 in Gainesville',
+        'NGPG-Surgical-Associates-MPB-Braselton': 'NGPG Surgical Associates at MPB in Braselton',
+        'NGPG-Surgical-Associates-Toccoa': 'NGPG Surgical Associates at Toccoa Clinic',
+        'NGPG-MP1-Thompson-Bridge': 'NGPG at MP1 Thompson Bridge',
+        'Urgent-Care-Jefferson': 'Urgent Care Jefferson'
     };
 
     // Load hexagon geography and visits data
@@ -560,7 +640,7 @@ export class MapManager {
             // Load both geography and data in parallel
             const [geoResponse, dataResponse] = await Promise.all([
                 fetch('Data/Other/hexagon_geos.geojson'),
-                fetch('Data/Other/visits_by_hex.csv')
+                fetch('Data/Other/visits_by_hex_2.csv')
             ]);
 
             if (!geoResponse.ok || !dataResponse.ok) {
@@ -920,49 +1000,66 @@ export class MapManager {
     formatDepartmentName(value) {
         // Handle special cases first
         const specialCases = {
+            'All': 'Total Visits',
             'GHI-Blairsville': 'GHI Blairsville',
             'GHI-Clayton': 'GHI Clayton',
+            'GHI-Cleveland': 'GHI Cleveland',
             'GHI-Cumming': 'GHI Cumming',
             'GHI-Dahlonega': 'GHI Dahlonega',
             'GHI-Habersham': 'GHI Habersham',
             'GHI-Hamilton-Mill': 'GHI Hamilton Mill',
-            'Medical-Plaza-Bethlehem': 'Medical Plaza in Bethlehem',
-            'Medical-Plaza-1-Braselton': 'Medical Plaza 1 in Braselton',
-            'Medical-Plaza-B-Braselton': 'Medical Plaza B in Braselton',
-            'Medical-Plaza-Buford': 'Medical Plaza in Buford',
-            'Medical-Plaza-1-Dawsonville': 'Medical Plaza 1 in Dawsonville',
-            'Medical-Plaza-2-Dawsonville': 'Medical Plaza 2 in Dawsonville',
-            'Medical-Plaza-1-Flowery-Branch': 'Medical Plaza 1 in Flowery Branch',
-            'Medical-Park-1-Gainesville': 'Medical Park 1 in Gainesville',
-            'Medical-Park-2-Gainesville': 'Medical Park 2 in Gainesville',
-            'Medical-Plaza-Jefferson': 'Medical Plaza in Jefferson',
-            'Medical-Plaza-1-Thompson-Bridge': 'Medical Plaza 1 - Thompson Bridge',
-            'NGHS-Cleveland-MOB': 'NGHS Cleveland MOB',
-            'NGMC-Barrow-MOB': 'NGMC Barrow MOB',
-            'NGPG-Auburn-Primary-Care': 'NGPG Auburn Primary Care',
-            'NGPG-Chestnut-Mountain': 'NGPG Chestnut Mountain',
-            'NGPG-Clayton-Primary-Care': 'NGPG Clayton Primary Care',
-            'NGPG-Community-Clinic': 'NGPG Community Clinic',
-            'Concierge-Medicine': 'Concierge Medicine',
-            'NGPG-Cumming': 'NGPG Cumming',
-            'NGPG-Dacula-Primary-Care': 'NGPG Dacula Primary Care',
-            'NGPG-Dahlonega': 'NGPG Dahlonega',
-            'Dawsonville-Surgical-Associates': 'Dawsonville Surgical Associates',
-            'NGPG-Family-Medicine-Lavonia': 'NGPG Family Medicine in Lavonia',
-            'NGPG-Hamilton-Mill': 'NGPG Hamilton Mill',
-            'NGPG-Internal-Medicine-Demorest': 'NGPG Internal Medicine in Demorest',
-            'NGPG-Oakwood': 'NGPG Oakwood',
-            'NGPG-Orthopedic-Surgery-Sports-Medicine': 'NGPG Ortho. Surgery & Sports Medicine in Demorest',
-            'NGPG-Orthopedic-Surgery-Dahlonega': 'NGPG Ortho. Surgery in Dahlonega',
-            'NGPG-Orthopedic-Surgery-Hamilton-Mill': 'NGPG Ortho. Surgery in Hamilton Mill',
-            'NGPG-Orthopedic-Surgery-Toccoa': 'NGPG Ortho. Surgery in Toccoa',
-            'NGPG-Orthopedic-Trauma-Recon-Surgery': 'NGPG Ortho. Trauma & Recon. Surgery',
-            'NGPG-Surgical-Associates-Demorest': 'NGPG Surgical Associates in Demorest',
-            'NGPG-Surgical-Associates-Toccoa': 'NGPG Surgical Associates in Toccoa',
-            'NGPG-West-Jackson': 'NGPG West Jackson',
-            'Toccoa-Clinic': 'Toccoa Clinic',
+            'GHI-MP1-Bethlehem': 'GHI at MP1 in Bethlehem',
+            'GHI-MP1-Buford': 'GHI at MP1 in Buford',
+            'GHI-MP1-Jefferson': 'GHI at MP1 in Jefferson',
+            'GHI-MP2-Dawsonville': 'GHI at MP2 in Dawsonville',
+            'GHI-MPB-Braselton': 'GHI at MPB in Braselton',
+            'GHI-Toccoa': 'GHI at Toccoa Clinic',
+            'GHI-Wisteria': 'GHI at Wisteria MOB',
+            'NGPG-FM-Auburn': 'NGPG FM Auburn',
+            'NGPG-FM-Chestnut-Mountain': 'NGPG FM Chestnut Mountain',
+            'NGPG-FM-Clayton': 'NGPG FM Clayton',
+            'NGPG-FM-Community-Clinic': 'NGPG FM Community Clinic Gainesville',
+            'NGPG-FM-Concierge-Medicine': 'NGPG FM Concierge Medicine Gainesville',
+            'NGPG-FM-Cumming': 'NGPG FM Cumming',
+            'NGPG-FM-Dacula': 'NGPG FM Dacula',
+            'NGPG-FM-Dahlonega': 'NGPG FM Dahlonega',
+            'NGPG-FM-Hamilton-Mill': 'NGPG FM Hamilton Mill',
+            'NGPG-FM-Lavonia': 'NGPG FM Lavonia',
+            'NGPG-FM-Oakwood': 'NGPG FM Oakwood',
+            'NGPG-FM-West-Jackson': 'NGPG FM West Jackson in Hoschton',
+            'NGPG-FM-MP1-Bethlehem': 'NGPG FM at MP1 in Bethlehem',
+            'NGPG-FM-MP1-Buford': 'NGPG FM at MP1 in Buford',
+            'NGPG-FM-MP1-Flowery-Branch': 'NGPG FM at MP1 in Flowery Branch',
+            'NGPG-FM-MP1-Jefferson': 'NGPG FM at MP1 in Jefferson',
+            'NGPG-FM-NGMC-Barrow-MOB': 'NGPG FM at NGMC Barrow MOB',
+            'NGPG-FM-IM-Cleveland': 'NGPG FM/IM Cleveland',
+            'NGPG-FM-IM-MP1-Braselton': 'NGPG FM/IM at MP1 in Braselton',
+            'NGPG-FM-IM-MP1-Dawsonville': 'NGPG FM/IM at MP1 in Dawsonville',
+            'NGPG-FM-IM-MP2-Gainesville': 'NGPG FM/IM at MP2 in Gainesville',
+            'NGPG-FM-IM-Toccoa': 'NGPG FM/IM at Toccoa Clinic',
+            'NGPG-IM-Demorest': 'NGPG IM Demorest',
+            'NGPG-Ortho-Gainesville': 'NGPG Ortho Trauma Gainesville',
+            'NGPG-Ortho-Surgery-Cleveland': 'NGPG Orthopedic Surgery Cleveland',
+            'NGPG-Ortho-Surgery-Dahlonega': 'NGPG Orthopedic Surgery Dahlonega',
+            'NGPG-Ortho-Surgery-Demorest': 'NGPG Orthopedic Surgery Demorest',
+            'NGPG-Ortho-Surgery-Hamilton-Mill': 'NGPG Orthopedic Surgery Hamilton Mill',
+            'NGPG-Ortho-Surgery-MP1-Bethlehem': 'NGPG Orthopedic Surgery at MP1 in Bethlehem',
+            'NGPG-Ortho-Surgery-MP1-Buford': 'NGPG Orthopedic Surgery at MP1 in Buford',
+            'NGPG-Ortho-Surgery-MP2-Dawsonville': 'NGPG Orthopedic Surgery at MP2 in Dawsonville',
+            'NGPG-Ortho-Surgery-MPB-Braselton': 'NGPG Orthopedic Surgery at MPB in Braselton',
+            'NGPG-Ortho-Surgery-Toccoa': 'NGPG Orthopedic Surgery at Toccoa Clinic',
+            'NGPG-Ortho-Surgery-MP1-Gainesville': 'NGPG Orthopedic Surgery at MP1 in Gainesville',
+            'NGPG-Surgical-Associates-Cleveland': 'NGPG Surgical Associates Cleveland',
+            'NGPG-Surgical-Associates-Dawsonville': 'NGPG Surgical Associates Dawsonville',
+            'NGPG-Surgical-Associates-Demorest': 'NGPG Surgical Associates Demorest',
+            'NGPG-Surgical-Associates-MP1-Bethlehem': 'NGPG Surgical Associates at MP1 in Bethlehem',
+            'NGPG-Surgical-Associates-MP1-Buford': 'NGPG Surgical Associates at MP1 in Buford',
+            'NGPG-Surgical-Associates-MP1-Jefferson': 'NGPG Surgical Associates at MP1 in Jefferson',
+            'NGPG-Surgical-Associates-MP2-Gainesville': 'NGPG Surgical Associates at MP2 in Gainesville',
+            'NGPG-Surgical-Associates-MPB-Braselton': 'NGPG Surgical Associates at MPB in Braselton',
+            'NGPG-Surgical-Associates-Toccoa': 'NGPG Surgical Associates at Toccoa Clinic',
+            'NGPG-MP1-Thompson-Bridge': 'NGPG at MP1 Thompson Bridge',
             'Urgent-Care-Jefferson': 'Urgent Care Jefferson',
-            'Wisteria-Medical-Office-Building': 'Wisteria Medical Office Building'
         };
 
         if (specialCases[value]) {
