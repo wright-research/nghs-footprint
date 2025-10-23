@@ -5,10 +5,11 @@ export class MapManager {
         this.accessToken = "pk.eyJ1Ijoid3dyaWdodDIxIiwiYSI6ImNtYTJ4NWtwdjAwb2oydnEzdjV0anRxeWIifQ.h63WS8JxUedXWYkcNCkSnQ";
         this.defaultCenter = [34.36393354341986, -83.8492021425795];
         this.defaultZoom = 9;
-        this.currentMarker = null; // Track the currently displayed marker
+        this.markers = {}; // Track all displayed markers by department name
         this.hexagonData = null; // Store hexagon visit data
         this.hexagonGeometry = null; // Store hexagon geography
         this.currentDepartment = 'All'; // Track current department selection
+        this.topDepartmentsThreshold = 50; // Threshold for showing top 3 vs top 1 department
     }
 
     // Helper function to reverse latitude and longitude in bounds
@@ -524,48 +525,81 @@ export class MapManager {
         el.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
         el.style.borderRadius = '50%';
         el.style.border = '2px solid #343a40';
+        el.style.cursor = 'pointer';
         return el;
     }
 
     // Add or update location marker based on selected department
     updateLocationMarker(departmentValue, centerCoords) {
-        // Remove existing marker if it exists
-        if (this.currentMarker) {
-            this.currentMarker.remove();
-            this.currentMarker = null;
-        }
+        // Remove all existing markers first
+        this.removeAllMarkers();
 
-        // Don't show marker for "All" selection
+        // Show all markers when "All" is selected
         if (departmentValue === 'All') {
+            // Loop through all location settings and create markers
+            Object.keys(MapManager.locationSettings).forEach(dept => {
+                // Skip the 'All' entry itself
+                if (dept === 'All') return;
+
+                const locationConfig = MapManager.locationSettings[dept];
+                // Smaller scale for overview
+                const markerElement = this.createCustomMarker(0.7); 
+                const markerCoords = MapManager.LatLngUtils.reverse(locationConfig.center);
+
+                // Create popup with formatted department name
+                const popup = new mapboxgl.Popup({ offset: 25, maxWidth: 'none' })
+                    .setHTML(`<div style="font-weight: bold; padding: 4px; white-space: nowrap;">${this.formatDepartmentName(dept)}</div>`);
+
+                // Create and store the marker with popup
+                this.markers[dept] = new mapboxgl.Marker(markerElement)
+                    .setLngLat(markerCoords)
+                    .setPopup(popup)
+                    .addTo(this.map);
+            });
+
+            console.log(`All markers added (${Object.keys(this.markers).length} total)`);
             return;
         }
 
         // Create and add new marker for specific location
-        const markerElement = this.createCustomMarker(1.2); // Slightly larger scale
+        // Larger scale for individual view
+        const markerElement = this.createCustomMarker(1.4); 
 
         // Convert coordinates to Mapbox format (longitude, latitude)
         const markerCoords = MapManager.LatLngUtils.reverse(centerCoords);
 
-        // Create the marker
-        this.currentMarker = new mapboxgl.Marker(markerElement)
+        // Create popup with formatted department name
+        const popup = new mapboxgl.Popup({ offset: 25, maxWidth: 'none' })
+            .setHTML(`<div style="font-weight: bold; padding: 4px; white-space: nowrap;">${this.formatDepartmentName(departmentValue)}</div>`);
+
+        // Create the marker with popup
+        this.markers[departmentValue] = new mapboxgl.Marker(markerElement)
             .setLngLat(markerCoords)
+            .setPopup(popup)
             .addTo(this.map);
 
         console.log(`Marker added for: ${departmentValue}`, markerCoords);
     }
 
-    // Remove current marker (if any)
+    // Remove all markers
+    removeAllMarkers() {
+        Object.keys(this.markers).forEach(dept => {
+            if (this.markers[dept]) {
+                this.markers[dept].remove();
+            }
+        });
+        this.markers = {};
+        console.log('All markers removed');
+    }
+
+    // Remove current marker (if any) - kept for backwards compatibility
     removeCurrentMarker() {
-        if (this.currentMarker) {
-            this.currentMarker.remove();
-            this.currentMarker = null;
-            console.log('Marker removed');
-        }
+        this.removeAllMarkers();
     }
 
     // Get current marker status
     hasMarker() {
-        return this.currentMarker !== null;
+        return Object.keys(this.markers).length > 0;
     }
 
     // Mapping between dropdown values and CSV column names
@@ -640,7 +674,7 @@ export class MapManager {
             // Load both geography and data in parallel
             const [geoResponse, dataResponse] = await Promise.all([
                 fetch('Data/Other/hexagon_geos.geojson'),
-                fetch('Data/Other/visits_by_hex_2.csv')
+                fetch('Data/Other/visits_by_hex.csv')
             ]);
 
             if (!geoResponse.ok || !dataResponse.ok) {
@@ -659,6 +693,9 @@ export class MapManager {
 
             // Show initial choropleth for "All" (Total_Visits) now that data is ready
             this.updateHexagonChoropleth('All');
+            
+            // Show all markers on initial load
+            this.updateLocationMarker('All', this.defaultCenter);
         } catch (error) {
             console.error('Error loading hexagon data:', error);
         }
@@ -705,6 +742,31 @@ export class MapManager {
         });
 
         console.log('Hexagon data joined successfully');
+    }
+
+    // Get top N departments for a hexagon by visit count
+    getTopDepartments(h3_id, topN = 3) {
+        const hexData = this.hexagonData[h3_id];
+        if (!hexData) {
+            return [];
+        }
+
+        // Get all department columns (exclude 'Total_Visits' and any metadata)
+        const departments = [];
+        for (const [columnName, visits] of Object.entries(hexData)) {
+            // Skip Total_Visits and any columns with 0 visits
+            if (columnName !== 'Total_Visits' && visits > 0) {
+                departments.push({
+                    columnName: columnName,
+                    visits: visits
+                });
+            }
+        }
+
+        // Sort by visit count (descending) and take top N
+        return departments
+            .sort((a, b) => b.visits - a.visits)
+            .slice(0, topN);
     }
 
     // Create or update hexagon choropleth layer
@@ -873,8 +935,43 @@ export class MapManager {
                     const columnName = MapManager.dropdownToColumnMapping[this.currentDepartment] || 'Total_Visits';
                     const visits = feature.properties[columnName] || 0;
 
-                    // Format the visit count
-                    tooltipVisits.textContent = visits.toLocaleString();
+                    // Format the basic visit count
+                    let tooltipContent = visits.toLocaleString();
+
+                    // If showing "All" departments, add top department(s) based on threshold
+                    if (this.currentDepartment === 'All' && visits > 0) {
+                        // Show top 3 if visits >= threshold, otherwise show top 1
+                        const showMultiple = visits >= this.topDepartmentsThreshold;
+                        const topCount = showMultiple ? 3 : 1;
+                        const topDepartments = this.getTopDepartments(h3_id, topCount);
+                        
+                        if (topDepartments.length > 0) {
+                            tooltipContent += '<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 0.9em;">';
+                            
+                            // Use different heading based on count
+                            const heading = showMultiple ? 'Top Departments Visited:' : 'Top Department Visited:';
+                            tooltipContent += `<div style="font-weight: 600; margin-bottom: 4px;">${heading}</div>`;
+                            
+                            topDepartments.forEach((dept, index) => {
+                                // Map column name back to a dropdown value for formatting
+                                const dropdownValue = Object.keys(MapManager.dropdownToColumnMapping)
+                                    .find(key => MapManager.dropdownToColumnMapping[key] === dept.columnName);
+                                
+                                const formattedName = dropdownValue ? 
+                                    this.formatDepartmentName(dropdownValue) : 
+                                    dept.columnName;
+                                
+                                // Only show number prefix for multiple departments
+                                const prefix = showMultiple ? `${index + 1}. ` : '';
+                                tooltipContent += `<div style="margin-bottom: 2px; white-space: nowrap;">${prefix}${formattedName}: ${dept.visits.toLocaleString()}</div>`;
+                            });
+                            
+                            tooltipContent += '</div>';
+                        }
+                    }
+
+                    // Set tooltip content (innerHTML to support HTML formatting)
+                    tooltipVisits.innerHTML = tooltipContent;
 
                     // Smart positioning with edge detection
                     const mouseX = e.originalEvent.pageX;
