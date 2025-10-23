@@ -977,14 +977,16 @@ export class MapManager {
                     const mouseX = e.originalEvent.pageX;
                     const mouseY = e.originalEvent.pageY;
                     const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
                     const tooltipOffset = 15; // Distance from cursor
                     const edgeBuffer = 200; // Switch sides when this close to edge
 
                     // Show tooltip first to get dimensions
                     tooltip.style.display = 'block';
                     const tooltipWidth = tooltip.offsetWidth;
+                    const tooltipHeight = tooltip.offsetHeight;
 
-                    // Check if tooltip would go off right edge
+                    // Horizontal positioning: Check if tooltip would go off right edge
                     if (mouseX + tooltipWidth + tooltipOffset > windowWidth - edgeBuffer) {
                         // Position to the left of cursor
                         tooltip.style.left = (mouseX - tooltipWidth - tooltipOffset) + 'px';
@@ -993,7 +995,14 @@ export class MapManager {
                         tooltip.style.left = (mouseX + tooltipOffset) + 'px';
                     }
 
-                    tooltip.style.top = (mouseY - tooltipOffset) + 'px';
+                    // Vertical positioning: Check if tooltip would go off bottom edge
+                    if (mouseY + tooltipHeight + tooltipOffset > windowHeight - 50) {
+                        // Position above the cursor
+                        tooltip.style.top = (mouseY - tooltipHeight - tooltipOffset) + 'px';
+                    } else {
+                        // Position below the cursor (default)
+                        tooltip.style.top = (mouseY + tooltipOffset) + 'px';
+                    }
                 }
             }
         });
