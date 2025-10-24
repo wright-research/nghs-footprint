@@ -10,6 +10,8 @@ export class MapManager {
         this.hexagonGeometry = null; // Store hexagon geography
         this.currentDepartment = 'All'; // Track current department selection
         this.topDepartmentsThreshold = 50; // Threshold for showing top 3 vs top 1 department
+        this.proximityAnimationEnabled = false; // Track proximity animation toggle state
+        this.currentlyHighlightedMarkers = []; // Track which markers are currently enlarged
     }
 
     // Helper function to reverse latitude and longitude in bounds
@@ -390,6 +392,9 @@ export class MapManager {
             center: locationConfig.center,
             zoom: locationConfig.zoom
         });
+
+        // Reset any marker animations when switching departments
+        this.resetMarkerAnimations();
 
         // Add or remove marker based on selection
         this.updateLocationMarker(departmentValue, locationConfig.center);
@@ -927,6 +932,11 @@ export class MapManager {
                         type: "FeatureCollection",
                         features: [feature]
                     });
+
+                    // Trigger proximity animation for top departments (if enabled)
+                    const columnName = MapManager.dropdownToColumnMapping[this.currentDepartment] || 'Total_Visits';
+                    const visits = feature.properties[columnName] || 0;
+                    this.animateTopDepartmentMarkers(h3_id, visits);
                 }
 
                 // Update tooltip with visit count
@@ -1022,6 +1032,9 @@ export class MapManager {
             if (tooltip) {
                 tooltip.style.display = 'none';
             }
+
+            // Reset marker animations when leaving hexagon
+            this.resetMarkerAnimations();
         });
     }
 
@@ -1176,6 +1189,101 @@ export class MapManager {
         return value.replace(/-/g, ' ')
             .replace(/Medical Plaza (\d+) /g, 'Medical Plaza $1 in ')
             .replace(/Medical Park (\d+) /g, 'Medical Park $1 in ');
+    }
+
+    // Animate markers for top departments when hovering over a hexagon
+    animateTopDepartmentMarkers(h3_id, totalVisits) {
+        // Only animate if feature is enabled and we're viewing "All" departments
+        if (!this.proximityAnimationEnabled || this.currentDepartment !== 'All') {
+            return;
+        }
+
+        // Reset any previously highlighted markers first
+        this.resetMarkerAnimations();
+
+        // Determine how many top departments to show based on threshold
+        const showMultiple = totalVisits >= this.topDepartmentsThreshold;
+        const topCount = showMultiple ? 3 : 1;
+        const topDepartments = this.getTopDepartments(h3_id, topCount);
+
+        if (topDepartments.length === 0) {
+            return;
+        }
+
+        // Get the dropdown values for the top departments
+        const topDepartmentKeys = topDepartments.map(dept => {
+            return Object.keys(MapManager.dropdownToColumnMapping)
+                .find(key => MapManager.dropdownToColumnMapping[key] === dept.columnName);
+        }).filter(key => key); // Remove any undefined values
+
+        // Animate each top department's marker and fade out all others
+        Object.keys(this.markers).forEach(deptKey => {
+            const marker = this.markers[deptKey];
+            if (!marker) return;
+
+            const markerElement = marker.getElement();
+            if (!markerElement) return;
+
+            const isTopDepartment = topDepartmentKeys.includes(deptKey);
+
+            if (isTopDepartment) {
+                // This is a top department - enlarge it
+                this.currentlyHighlightedMarkers.push({
+                    marker: marker,
+                    element: markerElement,
+                    wasHighlighted: true
+                });
+
+                // Apply animation with CSS transition (only for width/height, not transform/position)
+                markerElement.style.transition = 'width 0.3s ease-in-out, height 0.3s ease-in-out';
+                markerElement.style.width = '50px';  // Enlarged from ~25px (36 * 0.7)
+                markerElement.style.height = '42px'; // Enlarged proportionally
+            } else {
+                // This is NOT a top department - fade it out
+                this.currentlyHighlightedMarkers.push({
+                    marker: marker,
+                    element: markerElement,
+                    wasHighlighted: false
+                });
+
+                // Fade out with CSS transition
+                markerElement.style.transition = 'opacity 0.3s ease-in-out';
+                markerElement.style.opacity = '0';
+            }
+        });
+    }
+
+    // Reset marker animations back to normal size
+    resetMarkerAnimations() {
+        // Reset all currently highlighted markers
+        this.currentlyHighlightedMarkers.forEach(({ marker, element, wasHighlighted }) => {
+            if (element && element.parentNode) {
+                if (wasHighlighted) {
+                    // This was an enlarged marker - shrink it back
+                    element.style.transition = 'width 0.3s ease-in-out, height 0.3s ease-in-out';
+                    element.style.width = '25.2px';  // 36 * 0.7
+                    element.style.height = '21px';    // 30 * 0.7
+                    element.style.zIndex = '';        // Reset z-index
+                } else {
+                    // This was a faded marker - restore opacity
+                    element.style.transition = 'opacity 0.3s ease-in-out';
+                    element.style.opacity = '1';
+                }
+            }
+        });
+
+        // Clear the array
+        this.currentlyHighlightedMarkers = [];
+    }
+
+    // Enable or disable proximity animation
+    setProximityAnimationEnabled(enabled) {
+        this.proximityAnimationEnabled = enabled;
+        
+        // If disabling, reset any current animations
+        if (!enabled) {
+            this.resetMarkerAnimations();
+        }
     }
 
     // Add any additional map methods here as needed

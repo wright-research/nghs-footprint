@@ -7,6 +7,7 @@ export class UIControlsManager {
         this.mapManager = mapManager;
         this.isochroneManager = null;
         this.comparisonMapManager = null;
+        this.proximityAnimationSwitch = null;
         this.drivetimeSwitches = {
             '10': null,
             '20': null,
@@ -20,6 +21,7 @@ export class UIControlsManager {
         this.departmentSelect = document.getElementById('departmentSelect');
         this.drivetimeContainer = document.querySelector('.drivetime-container');
         this.drivetimeHeader = document.querySelector('.drivetime-header');
+        this.proximityAnimationSwitch = document.getElementById('proximity-animation');
 
         // Get drivetime switches
         this.drivetimeSwitches['10'] = document.getElementById('drivetime-10');
@@ -29,6 +31,10 @@ export class UIControlsManager {
         if (!this.departmentSelect || !this.drivetimeContainer || !this.drivetimeHeader) {
             console.error('Required UI elements not found');
             return false;
+        }
+
+        if (!this.proximityAnimationSwitch) {
+            console.warn('Proximity animation switch not found');
         }
 
         // Check if all switches were found
@@ -65,6 +71,13 @@ export class UIControlsManager {
                 this.handleDrivetimeSwitchChange(minutes, event.target.checked);
             });
         });
+
+        // Listen for changes on proximity animation switch
+        if (this.proximityAnimationSwitch) {
+            this.proximityAnimationSwitch.addEventListener('sl-change', (event) => {
+                this.handleProximityAnimationChange(event.target.checked);
+            });
+        }
     }
 
     // Handle department dropdown changes
@@ -119,6 +132,14 @@ export class UIControlsManager {
     handleDrivetimeSwitchChange(minutes, isChecked) {
         if (this.isochroneManager) {
             this.isochroneManager.toggleIsochroneLayer(minutes, isChecked);
+        }
+    }
+
+    // Handle proximity animation switch changes
+    handleProximityAnimationChange(isChecked) {
+        if (this.mapManager) {
+            this.mapManager.setProximityAnimationEnabled(isChecked);
+            console.log(`Proximity animation ${isChecked ? 'enabled' : 'disabled'}`);
         }
     }
 

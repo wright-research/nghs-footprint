@@ -273,7 +273,7 @@ sl-button.openDrawerBtn::part(base):hover {
 
 .additional-layers-checkboxes {
     display: flex;
-    justify-content: center;
+    justify-content: left;
     gap: 9px;
 }
 
