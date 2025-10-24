@@ -1240,16 +1240,16 @@ export class MapManager {
                 markerElement.style.width = '50px';  // Enlarged from ~25px (36 * 0.7)
                 markerElement.style.height = '42px'; // Enlarged proportionally
             } else {
-                // This is NOT a top department - fade it out
+                // This is NOT a top department - fade it to semi-transparent
                 this.currentlyHighlightedMarkers.push({
                     marker: marker,
                     element: markerElement,
                     wasHighlighted: false
                 });
 
-                // Fade out with CSS transition
+                // Fade to semi-transparent with CSS transition
                 markerElement.style.transition = 'opacity 0.3s ease-in-out';
-                markerElement.style.opacity = '0';
+                markerElement.style.opacity = '0.2';
             }
         });
     }
