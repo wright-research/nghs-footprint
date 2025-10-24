@@ -329,7 +329,7 @@ export class ComparisonMapManager {
     console.log('Updating comparison layer to:', layerValue);
     
     // Handle different comparison layer types
-    if (layerValue === 'aerial' || layerValue === 'streets') {
+    if (layerValue === 'aerial' || layerValue === 'streets' || layerValue === 'hybrid') {
       // For blank layers, change the base map style and hide legend
       this.removeComparisonChoropleth();
       this.removeDotProjects();
@@ -430,12 +430,15 @@ export class ComparisonMapManager {
     } else if (layerValue === 'streets') {
       // Mapbox streets style
       newStyle = "mapbox://styles/mapbox/streets-v11";
+    } else if (layerValue === 'hybrid') {
+      // Mapbox satellite streets hybrid style
+      newStyle = "mapbox://styles/mapbox/satellite-streets-v12";
     }
 
     // Set the new style
     this.afterMap.setStyle(newStyle);
 
-    // For Streets, wait for map to be idle; for others, keep existing behavior
+    // For Streets, wait for map to be idle and apply black styling
     if (layerValue === 'streets') {
       this.afterMap.once('idle', () => {
         // Restore the map position
@@ -448,6 +451,28 @@ export class ComparisonMapManager {
           if (this.afterMap.getLayer('county-boundaries')) {
             this.afterMap.setPaintProperty('county-boundaries', 'line-color', '#000000');
             this.afterMap.setPaintProperty('county-boundaries', 'line-width', 1);
+            this.afterMap.setPaintProperty('county-boundaries', 'line-opacity', 0.9);
+          }
+
+          // Ensure ordering remains correct
+          this.ensureCountyLayersOnTopAfterMap();
+        });
+
+        console.log(`Base map style updated to: ${layerValue}`);
+      });
+    } else if (layerValue === 'hybrid') {
+      // For Hybrid, wait for map to be idle and apply white styling (like aerial)
+      this.afterMap.once('idle', () => {
+        // Restore the map position
+        this.afterMap.setCenter(currentCenter);
+        this.afterMap.setZoom(currentZoom);
+
+        // Re-add county boundaries and labels
+        this.loadCountyLayersAfterMap().then(() => {
+          // Apply white styling for hybrid boundaries (like aerial)
+          if (this.afterMap.getLayer('county-boundaries')) {
+            this.afterMap.setPaintProperty('county-boundaries', 'line-color', '#ffffff');
+            this.afterMap.setPaintProperty('county-boundaries', 'line-width', 2);
             this.afterMap.setPaintProperty('county-boundaries', 'line-opacity', 0.9);
           }
 
