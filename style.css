@@ -90,6 +90,8 @@ sl-button.openDrawerBtn::part(base):hover {
     top: 0.5px;
     right: 0px !important;
     z-index: 99 !important;
+    /* hide the geocoder temporarily */
+    display: none;
 }
 
 #geocoder-container:hover {
