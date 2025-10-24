@@ -122,6 +122,9 @@ export class UIControlsManager {
         // Clear and disable/enable switches based on selection
         this.updateSwitchState(selectedValue);
 
+        // Enable/disable proximity animation based on selection
+        this.updateProximityAnimationState(selectedValue);
+
         // Load isochrone data if isochroneManager is available
         if (this.isochroneManager) {
             this.isochroneManager.loadIsochrone(selectedValue);
@@ -140,6 +143,29 @@ export class UIControlsManager {
         if (this.mapManager) {
             this.mapManager.setProximityAnimationEnabled(isChecked);
             console.log(`Proximity animation ${isChecked ? 'enabled' : 'disabled'}`);
+        }
+    }
+
+    // Update proximity animation state based on department selection
+    updateProximityAnimationState(selectedValue) {
+        if (!this.proximityAnimationSwitch) {
+            return;
+        }
+
+        const isAllSelected = selectedValue === 'All';
+
+        if (isAllSelected) {
+            // Enable the switch when "All" is selected
+            this.proximityAnimationSwitch.disabled = false;
+        } else {
+            // Disable and turn off the switch when a specific department is selected
+            this.proximityAnimationSwitch.disabled = true;
+            this.proximityAnimationSwitch.checked = false;
+            
+            // Also make sure the animation is disabled in the map
+            if (this.mapManager) {
+                this.mapManager.setProximityAnimationEnabled(false);
+            }
         }
     }
 
@@ -193,6 +219,9 @@ export class UIControlsManager {
 
         // Update switch state (UI only - no map updates)
         this.updateSwitchState(selectedValue);
+        
+        // Update proximity animation state (UI only)
+        this.updateProximityAnimationState(selectedValue);
     }
 
     // Convert dropdown values to readable department names

@@ -709,12 +709,13 @@ export class MapManager {
     // Simple CSV parser
     parseCSV(csvText) {
         const lines = csvText.trim().split('\n');
-        const headers = lines[0].split(',');
+        // Strip carriage returns from headers (handles Windows line endings)
+        const headers = lines[0].split(',').map(header => header.trim().replace(/\r/g, ''));
 
         const data = {};
         for (let i = 1; i < lines.length; i++) {
             const values = lines[i].split(',');
-            const h3_id = values[0];
+            const h3_id = values[0].trim();
 
             data[h3_id] = {};
             for (let j = 1; j < headers.length; j++) {
