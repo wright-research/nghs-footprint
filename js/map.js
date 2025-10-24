@@ -946,11 +946,11 @@ export class MapManager {
                         const topDepartments = this.getTopDepartments(h3_id, topCount);
                         
                         if (topDepartments.length > 0) {
-                            tooltipContent += '<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 0.9em;">';
+                            tooltipContent += '<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 0.93em;">';
                             
                             // Use different heading based on count
                             const heading = showMultiple ? 'Top Departments Visited:' : 'Top Department Visited:';
-                            tooltipContent += `<div style="font-weight: 600; margin-bottom: 4px;">${heading}</div>`;
+                            tooltipContent += `<div style="font-weight: 600; margin-bottom: 2px;">${heading}</div>`;
                             
                             topDepartments.forEach((dept, index) => {
                                 // Map column name back to a dropdown value for formatting
@@ -963,7 +963,7 @@ export class MapManager {
                                 
                                 // Only show number prefix for multiple departments
                                 const prefix = showMultiple ? `${index + 1}. ` : '';
-                                tooltipContent += `<div style="margin-bottom: 2px; white-space: nowrap;">${prefix}${formattedName}: ${dept.visits.toLocaleString()}</div>`;
+                                tooltipContent += `<div style="margin-bottom: 1px; white-space: nowrap;">${prefix}${formattedName} (${dept.visits.toLocaleString()})</div>`;
                             });
                             
                             tooltipContent += '</div>';
