@@ -24,6 +24,16 @@ export class PossibleSitesManager {
                 name: "Jefferson",
                 coordinates: [34.10113213953785, -83.59355942525713],
                 pdfFile: "Jefferson.pdf"
+            },
+            {
+                name: "Tom Arrendale Interchange",
+                coordinates: [34.59687515878805, -83.42954869657054],
+                pdfFile: "TomArrendale.pdf"
+            },
+            {
+                name: "Aubrey Higgins Property",
+                coordinates: [34.547758, -83.537424],
+                pdfFile: "AubreyHiggins.pdf"
             }
         ];
     }
@@ -150,12 +160,13 @@ export class PossibleSitesManager {
                         text-decoration: underline;
                         font-size: 14px;
                         padding: 4px 0;
+                        text-align: center;
                     "
                     onclick="window.open('Data/StaticMaps/${siteConfig.pdfFile}', '_blank')"
                     onmouseover="this.style.color='#005a87'"
                     onmouseout="this.style.color='#007cbf'"
                 >
-                    Click here to open site map
+                    Click here for more information
                 </div>
             </div>
         `;
