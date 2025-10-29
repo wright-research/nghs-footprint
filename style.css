@@ -27,6 +27,9 @@ header {
     z-index: 2;
     opacity: 0.95;
     border-bottom: 1px solid #efefef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 
@@ -36,11 +39,24 @@ header {
     bottom: 45px;
     transform: translateY(-50%);
     /* Ensures perfect vertical centering */
-    height: 45px;
+    height: 43px;
     /* Adjust as needed */
     width: auto;
     /* Maintains aspect ratio */
     z-index: 2;
+}
+
+/* Header-specific logo styling */
+.nghs-header-logo {
+    height: 38px;
+    width: auto;
+    display: block;
+}
+
+.header-logo-link {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 18px;
 }
 
 /* Common positioning for the button - applies in both modes */
